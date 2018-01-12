@@ -550,15 +550,20 @@ fig1plot  <- function(genes){
 #           c("Late",  "Nupr1","Ccl11","Igfbp2",  "Serping1", "Spp1", "Dcn", "Itih5"  )
 #           ) 
 
-sets <- list(c("Mouse", "Ccdc141", "Myct1", "Hspg2", "Capg", "Smoc2", "Icam1", "Cd34", "Cxcr4", "Tnfrsf18", "Tnfrsf10b", "Il2rg"
-               ,"Pecam1", "Klhl6", "Pgm5", "Krt84", "4930509E16Rik", "Eogt", "Hmgcs2", "Hspg2", "Col4a2", "Pvr", "Hhex",
-               "Sparc", "Itpkb", "Itga2b", "Timeless", "Yes1", "4930523C07Rik", "Cd276", "Gpr160"),
-             c("Human", "Aplnr", "Aldh1a7", "Samsn1", "Itga6", "Slc16a9", "Pltp", "H2???T23",
-               "Adamts9", "Osmr", "Srgn", "Apold1", "Prdm1", "H2???Q5", "Kcnj8", "Dlc1",
-               "Klf4", "H2???Q2", "Abcc9", "Calcrl", "Utrn", "Vamp5"))
+# sets <- list(c("Mouse", "Ccdc141", "Myct1", "Hspg2", "Capg", "Smoc2", "Icam1", "Cd34", "Cxcr4", "Tnfrsf18", "Tnfrsf10b", "Il2rg"
+#                ,"Pecam1", "Klhl6", "Pgm5", "Krt84", "4930509E16Rik", "Eogt", "Hmgcs2", "Hspg2", "Col4a2", "Pvr", "Hhex",
+#                "Sparc", "Itpkb", "Itga2b", "Timeless", "Yes1", "4930523C07Rik", "Cd276", "Gpr160"),
+#              c("Human", "Aplnr", "Aldh1a7", "Samsn1", "Itga6", "Slc16a9", "Pltp", "H2???T23",
+#                "Adamts9", "Osmr", "Srgn", "Apold1", "Prdm1", "H2???Q5", "Kcnj8", "Dlc1",
+#                "Klf4", "H2???Q2", "Abcc9", "Calcrl", "Utrn", "Vamp5"))
 
-# sets <- list(c("Mouse", "Ccdc141","Pecam1", "Klhl6", "Col4a2"),
-#              c("Human", "Aplnr", "Aldh1a7", "Samsn1"))
+
+sets <- list(c("EC Down (mouse)",
+"Itm2a", "Emcn", "Ccm2l", "Apcdd1", "Slc35f2", "Slco1c1", "Tmem204", "Eif2ak2", "Pggt1b", "Slc25a53", "Erap1", "Calcrl", "Foxc1", "Ebf1", "Cav2", "Cnot6l", "Mitd1", "Itgb1", "Atp13a5"),
+
+c("Pericytes Down (mouse)",
+"Atp13a5", "Ccm2l", "Gulp1", "Erap1", "Wisp1", "Ebf1", "Foxd1", "Hey2", "Plxdc2", "Acer3", "Cav2", "Slc35f2", "Calcrl", "Itgb1" ))
+
 
 library(gridExtra)
 pdf(file="fig1.pdf",  width=4, height=28) 
