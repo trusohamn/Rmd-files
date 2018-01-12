@@ -15,8 +15,9 @@ output: word_document
 ```{r dataLoad1, echo=FALSE, include=FALSE, eval = TRUE}
 rm(list=ls()) 
 #wd = "C:/Users/Marta/Desktop/sebastian/expression"
-wd = "C:/Users/mlecz_000/Desktop/sebastian/expression"
+#wd = "C:/Users/mlecz_000/Desktop/sebastian/expression"
 #setwd("C:/Users/Marta/Desktop/Sebastian/expression")
+wd <- "C:/Users/martal1/ownCloud/Desktop/sebastian/expression"
 setwd(wd)
 load("merged_ForSeb.Rda" )
 
@@ -40,6 +41,7 @@ myFullData$level1class <- revalue(myFullData$level1class, c("Vascular and Leptom
 ```
 
 ```{r dataLoad2, echo=FALSE, include=FALSE, eval = TRUE} 
+setwd(wd)
 df <- read.csv("GSE18920_for_R_wGeneNames (no log2).csv")
 
 #There are gene duplicates!
@@ -76,7 +78,7 @@ df <-subset(df, Tissue=="AH")
 ```
 
 ```{r dataLoad3, echo=FALSE, include=FALSE, eval = TRUE} 
-wd = "C:/Users/mlecz_000/Desktop/sebastian/expression"
+#wd = "C:/Users/mlecz_000/Desktop/sebastian/expression"
 setwd(wd)
 df2 <- read.csv("GSE18597_data_firstName.csv")
 names(df2)[1]<-paste("NAME")
@@ -114,7 +116,7 @@ df2$Day <- as.numeric(as.character(df2$Day))
 ```
 
 ```{r chooseGene, echo=FALSE}
-gen="A830018L16Rik"
+gen="Gfap"
 ```
 
 ```{r specPlot, echo=FALSE, dpi=300, fig.width=5, fig.height=8, dev.args=list(pointsize=16)}
@@ -127,29 +129,29 @@ aes_string2 <- function(...){
 }
 
 plot1 <- function(gen){
-color <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184")
-avals <- c(rep.int(0.4,10))
-avalsHex <- paste0(color, toupper(as.hexmode(round(avals*255))))
-
-#create a temp dataframe with only gen column
-temp <- myFullData[c(gen, "level1class")]
-names(temp)[1] <-"gen"
-
-ggplot(temp, aes(x=level1class , y=gen)) +
-  geom_boxplot(aes(fill=level1class, color=level1class), outlier.colour = NA, alpha = 0.65)+
-  stat_summary(geom = "crossbar", width=1, fatten=0, size=0.75, color="white", fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) })+
-  scale_fill_manual(values=color)+
-  scale_alpha_manual(values = avals) +
-  scale_colour_manual(values = avalsHex)+
-  geom_jitter(aes(color=level1class ), size=1, alpha=0.3, position = position_jitter(width = .05))+
-  theme(panel.background = element_rect(fill='white', colour='white'),
-        legend.position="none",legend.title=element_blank(),
-        axis.line.y =element_line(colour="grey85"), axis.title.y=element_text(colour="grey45"), axis.text.y = element_text(colour="grey45"), axis.ticks.y = element_line(colour="grey45"),
-         axis.text.x=element_text(colour="grey45",angle = 90, hjust = 1, size=8),axis.ticks.x = element_blank(), axis.line.x = element_line(colour="grey85"), axis.title.x=element_blank())+
-  xlab("")+
-  ylab("RNA count per cell")+
-  ggtitle(gen)+
-  labs(subtitle=("Cell type specific expression"))
+  color <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184")
+  avals <- c(rep.int(0.4,10))
+  avalsHex <- paste0(color, toupper(as.hexmode(round(avals*255))))
+  
+  #create a temp dataframe with only gen column
+  temp <- myFullData[c(gen, "level1class")]
+  names(temp)[1] <-"gen"
+  
+  ggplot(temp, aes(x=level1class , y=gen)) +
+    geom_boxplot(aes(fill=level1class, color=level1class), outlier.colour = NA, alpha = 0.65)+
+    stat_summary(geom = "crossbar", width=1, fatten=0, size=0.75, color="white", fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) })+
+    scale_fill_manual(values=color)+
+    scale_alpha_manual(values = avals) +
+    scale_colour_manual(values = avalsHex)+
+    geom_jitter(aes(color=level1class ), size=1, alpha=0.3, position = position_jitter(width = .05))+
+    theme(panel.background = element_rect(fill='white', colour='white'),
+          legend.position="none",legend.title=element_blank(),
+          axis.line.y =element_line(colour="grey85"), axis.title.y=element_text(colour="grey45"), axis.text.y = element_text(colour="grey45"), axis.ticks.y = element_line(colour="grey45"),
+          axis.text.x=element_text(colour="grey45",angle = 90, hjust = 1, size=8),axis.ticks.x = element_blank(), axis.line.x = element_line(colour="grey85"), axis.title.x=element_blank())+
+    xlab("")+
+    ylab("RNA count per cell")+
+    ggtitle(gen)+
+    labs(subtitle=("Cell type specific expression"))
 }
 
 print(plot1(gen))
@@ -181,20 +183,20 @@ data_summary <- function(data, varname, groupnames){
   }
   data_sum<-ddply(data, groupnames, .fun=summary_func,
                   varname)
- return(data_sum)
+  return(data_sum)
 }
 
 ds <- data_summary(df2, varname=gen, groupnames=c("Genotype", "Day"))
 
 
 
-  ggplot(ds, aes(x=Day, y=mean, group=Genotype, color=Genotype)) + 
+ggplot(ds, aes(x=Day, y=mean, group=Genotype, color=Genotype)) + 
   geom_line(size=1.5) +
   ylab("")+
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
-                 position=position_dodge(0.05))+
-        ggtitle(gen)+
-      geom_point(color="black", size=3)+
+                position=position_dodge(0.05))+
+  ggtitle(gen)+
+  geom_point(color="black", size=3)+
   theme(panel.background = element_rect(fill='white', colour='black'),
         legend.position="right")
 
@@ -212,46 +214,46 @@ data_summary <- function(data, varname, groupnames){
   }
   data_sum<-ddply(data, groupnames, .fun=summary_func,
                   varname)
- return(data_sum)
+  return(data_sum)
 }
 
 plot2<-function(gen){
-
-avals <- c(rep.int(0.3,2))
-avalsHex <- paste0(color, toupper(as.hexmode(round(avals*255))))
-
-temp <- df2[c(gen, "Genotype", "Day")]
-names(temp)[1] <-"gen"
-
-ds <- data_summary(temp, varname="gen", groupnames=c("Genotype", "Day"))
-#create a temp dataframe with only gen column
-
-
-ggplot(temp, aes_string(x=factor(temp$Day, c("28","42","56","70","98","112","126")), y="gen") ) + 
-  #geom_line(size=1.5) +
-  geom_boxplot(aes(fill=Genotype, color=Genotype), varwidth=TRUE, position = position_dodge(width=0),
-               alpha=0.5)+
-  scale_fill_manual(values=color)+
-  scale_alpha_manual(values = avals) +
-  scale_colour_manual(values = avalsHex)+
-  stat_summary(aes(group=Genotype),geom = "crossbar", width=1, fatten=0, size=0.75, color="white", fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) })+
-  geom_jitter(aes(color=Genotype ), size=1, alpha=0.9, position = position_jitter(width = 0))+
-  ylab("RNA expression levels")+
-  xlab("Day")+
-  ggtitle("")+
-  labs(subtitle=("Mouse SOD1 (G93A)"))+
-  theme(panel.background = element_rect(fill='white', colour='white'),
-        legend.position="right",legend.title=element_blank(),
-        axis.line.y = element_line(colour="grey85"), axis.title.y=element_text(colour="grey45"), axis.text.y = element_text(colour="grey45"), axis.ticks.y = element_line(colour="grey45"),
-        axis.text.x=element_text(colour="grey45"), axis.ticks.x = element_line(colour="grey45"), axis.line.x = element_line(colour="grey85"), axis.title.x=element_text(colour="grey45"),
-         legend.text = element_text(colour="grey45")) +
-  stat_summary(fun.y=mean, geom="smooth", aes(group=Genotype, color=Genotype))
-
+  
+  avals <- c(rep.int(0.3,2))
+  avalsHex <- paste0(color, toupper(as.hexmode(round(avals*255))))
+  
+  temp <- df2[c(gen, "Genotype", "Day")]
+  names(temp)[1] <-"gen"
+  
+  ds <- data_summary(temp, varname="gen", groupnames=c("Genotype", "Day"))
+  #create a temp dataframe with only gen column
+  
+  
+  ggplot(temp, aes_string(x=factor(temp$Day, c("28","42","56","70","98","112","126")), y="gen") ) + 
+    #geom_line(size=1.5) +
+    geom_boxplot(aes(fill=Genotype, color=Genotype), varwidth=TRUE, position = position_dodge(width=0),
+                 alpha=0.5)+
+    scale_fill_manual(values=color)+
+    scale_alpha_manual(values = avals) +
+    scale_colour_manual(values = avalsHex)+
+    stat_summary(aes(group=Genotype),geom = "crossbar", width=1, fatten=0, size=0.75, color="white", fun.data = function(x){ return(c(y=median(x), ymin=median(x), ymax=median(x))) })+
+    geom_jitter(aes(color=Genotype ), size=1, alpha=0.9, position = position_jitter(width = 0))+
+    ylab("RNA expression levels")+
+    xlab("Day")+
+    ggtitle("")+
+    labs(subtitle=("Mouse SOD1 (G93A)"))+
+    theme(panel.background = element_rect(fill='white', colour='white'),
+          legend.position="right",legend.title=element_blank(),
+          axis.line.y = element_line(colour="grey85"), axis.title.y=element_text(colour="grey45"), axis.text.y = element_text(colour="grey45"), axis.ticks.y = element_line(colour="grey45"),
+          axis.text.x=element_text(colour="grey45"), axis.ticks.x = element_line(colour="grey45"), axis.line.x = element_line(colour="grey85"), axis.title.x=element_text(colour="grey45"),
+          legend.text = element_text(colour="grey45")) +
+    stat_summary(fun.y=mean, geom="smooth", aes(group=Genotype, color=Genotype))
+  
 }
 
 print(plot2(gen))
- 
- 
+
+
 ```
 
 
@@ -268,13 +270,13 @@ for(entry in rownames(df3)){
 ds2 <- data_summary(df3, varname=gen, groupnames=c("Genotype", "Day"))
 ds2<- ds2[ds2$Genotype=="SOD"&ds$Day %in% c(56,  70,  98, 112 ,126),]
 
-  ggplot(ds2, aes(x=Day, y=mean)) +
+ggplot(ds2, aes(x=Day, y=mean)) +
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=1, size=0.8,
-      position=position_dodge(0.05), color="darkgray")+
+                position=position_dodge(0.05), color="darkgray")+
   geom_line(color="lightblue", size=1.5) +
   geom_point(aes(color=mean), size=3)+
   ylab("")+
-        ggtitle(gen)+
+  ggtitle(gen)+
   theme(panel.background = element_rect(fill='white', colour='white'),
         legend.position="none",legend.title=element_blank(),
         axis.line.y = element_blank(), axis.title.y=element_blank(), axis.text.y = element_text(colour="grey"), axis.ticks.y = element_blank(),
@@ -325,10 +327,10 @@ df2$Genotype <- revalue(df2$Genotype, c("Ctr" = "Ctrl", "SOD" = "ALS"))
 df$Phen <- revalue(df$Phen, c("CTRL" = "Ctrl", "ALS" = "ALS"))
 
 empty <- ggplot() + geom_point(aes(1, 1), colour = "white") + theme(plot.background = element_blank(),
-panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-panel.border = element_blank(), panel.background = element_blank(), axis.title.x = element_blank(),
-axis.title.y = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank(),
-axis.ticks = element_blank())
+                                                                    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                                                                    panel.border = element_blank(), panel.background = element_blank(), axis.title.x = element_blank(),
+                                                                    axis.title.y = element_blank(), axis.text.x = element_blank(), axis.text.y = element_blank(),
+                                                                    axis.ticks = element_blank())
 
 setwd(wd) 
 renames<- read.csv("mouse_human_one_to_one.csv")
@@ -398,7 +400,7 @@ for (gen in genes) {
     }
     
     #dynamics
-      if (gen %in% colnames(df2)){
+    if (gen %in% colnames(df2)){
       p2 <- plot2(gen)
     }
     else{
@@ -411,7 +413,7 @@ for (gen in genes) {
     }
     else if (gen %in% renames$mouse){
       homolog <- as.character(renames[match(gen,renames$mouse), "human"])
-
+      
       
       if(homolog %in% colnames(df)){
         p3 <- plot3_withName(homolog)
@@ -428,7 +430,7 @@ for (gen in genes) {
     else{
       p3 <- empty
     }
-  
+    
     filename = tolower(filename)
     png(file=paste0(filename, ".png"), res=325, width=2500, height = 1750) 
     grid.arrange(p1, p2, p3, nrow = 1, widths = c(5,7,3))
@@ -459,100 +461,113 @@ data_summary <- function(data, varname, groupnames){
   }
   data_sum<-ddply(data, groupnames, .fun=summary_func,
                   varname)
- return(data_sum)
+  return(data_sum)
 }
 
 summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
                       conf.interval=.95, .drop=TRUE) {
-    library(plyr)
-
-    # New version of length which can handle NA's: if na.rm==T, don't count them
-    length2 <- function (x, na.rm=FALSE) {
-        if (na.rm) sum(!is.na(x))
-        else       length(x)
-    }
-
-    # This does the summary. For each group's data frame, return a vector with
-    # N, mean, and sd
-    datac <- ddply(data, groupvars, .drop=.drop,
-      .fun = function(xx, col) {
-        c(N    = length2(xx[[col]], na.rm=na.rm),
-          mean = mean   (xx[[col]], na.rm=na.rm),
-          sd   = sd     (xx[[col]], na.rm=na.rm)
-        )
-      },
-      measurevar
-    )
-
-    # Rename the "mean" column    
-    datac <- rename(datac, c("mean" = measurevar))
-
-    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
-
-    # Confidence interval multiplier for standard error
-    # Calculate t-statistic for confidence interval: 
-    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
-    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
-    datac$ci <- datac$se * ciMult
-
-    return(datac)
+  library(plyr)
+  
+  # New version of length which can handle NA's: if na.rm==T, don't count them
+  length2 <- function (x, na.rm=FALSE) {
+    if (na.rm) sum(!is.na(x))
+    else       length(x)
+  }
+  
+  # This does the summary. For each group's data frame, return a vector with
+  # N, mean, and sd
+  datac <- ddply(data, groupvars, .drop=.drop,
+                 .fun = function(xx, col) {
+                   c(N    = length2(xx[[col]], na.rm=na.rm),
+                     mean = mean   (xx[[col]], na.rm=na.rm),
+                     sd   = sd     (xx[[col]], na.rm=na.rm)
+                   )
+                 },
+                 measurevar
+  )
+  
+  # Rename the "mean" column    
+  datac <- rename(datac, c("mean" = measurevar))
+  
+  datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+  
+  # Confidence interval multiplier for standard error
+  # Calculate t-statistic for confidence interval: 
+  # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+  ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+  datac$ci <- datac$se * ciMult
+  
+  return(datac)
 }
 
 theme1 <- theme(panel.background = element_rect(fill='white', colour='white'),
-        legend.position="none",legend.title=element_blank(),
-        axis.line.y = element_blank(), axis.title.y=element_blank(), axis.text.y = element_text(colour="grey45"), axis.ticks.y = element_line(colour="grey45"),
-         axis.text.x=element_text(colour="grey45",angle = 90, hjust = 1, size=8),axis.ticks.x = element_blank(), axis.line.x = element_blank(), axis.title.x=element_blank())
+                legend.position="none",legend.title=element_blank(),
+                axis.line.y = element_blank(), axis.title.y=element_blank(), axis.text.y = element_text(colour="grey45"), axis.ticks.y = element_line(colour="grey45"),
+                axis.text.x=element_text(colour="grey45",angle = 90, hjust = 1, size=8),axis.ticks.x = element_blank(), axis.line.x = element_blank(), axis.title.x=element_blank())
 
 theme2 <- theme(panel.background = element_rect(fill='white', colour='white'),
-        legend.position="none",legend.title=element_blank(),
-        axis.line.y = element_blank(), axis.title.y=element_blank(), axis.text.y =  element_blank(), axis.ticks.y =  element_blank(),
-         axis.text.x=element_text(colour="grey45",angle = 90, hjust = 1, size=8),axis.ticks.x = element_blank(), axis.line.x = element_blank(), axis.title.x=element_blank())
+                legend.position="none",legend.title=element_blank(),
+                axis.line.y = element_blank(), axis.title.y=element_blank(), 
+                axis.text.y =  element_blank(), axis.ticks.y =  element_blank(),
+                axis.text.x=element_text(colour="grey45",angle = 90, hjust = 1, size=8),
+                axis.ticks.x = element_blank(), axis.line.x = element_blank(), axis.title.x=element_blank(),
+                strip.text.y = element_text(size = 5))
 
 fig1plot  <- function(genes){
-library(reshape)
-color <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184")
-avals <- c(rep.int(0.4,10))
-avalsHex <- paste0(color, toupper(as.hexmode(round(avals*255))))
-
-name <- genes[1]
-genes <- genes[(-1)]
-
-colnames <- c("level1class" ,  genes)
-sampleData <- melt(myFullData[, colnames])
-
-dsf <- data_summary(sampleData, varname="value", groupnames= c("variable", "level1class" )) #SD
-dsfse <- summarySE(sampleData, measurevar="value", groupvars= c("variable", "level1class" )) #SE
-
-
-library(ggplot2)
-ggplot(dsfse, aes(x=level1class , y= value, fill=level1class)) +
+  library(reshape)
+  color <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184")
+  avals <- c(rep.int(0.4,10))
+  avalsHex <- paste0(color, toupper(as.hexmode(round(avals*255))))
+  
+  name <- genes[1]
+  genes <- genes[(-1)]
+  
+  colnames <- c("level1class" ,  genes)
+  sampleData <- melt(myFullData[, colnames])
+  
+  dsf <- data_summary(sampleData, varname="value", groupnames= c("variable", "level1class" )) #SD
+  dsfse <- summarySE(sampleData, measurevar="value", groupvars= c("variable", "level1class" )) #SE
+  
+  
+  library(ggplot2)
+  ggplot(dsfse, aes(x=level1class , y= value, fill=level1class)) +
     geom_errorbar(aes(ymin=value, ymax=value+se), width=.2,
-                 position=position_dodge(.9))+
-  geom_bar(stat="identity", 
-           position=position_dodge(), colour="white")+
-  scale_fill_manual(values=color)+
-  theme2+
-  facet_grid(variable ~., scales="free")+
-  xlab("")+
-  ylab("counts")+
-  ggtitle(name)+
-  labs(subtitle=("Mean with SEM"))
+                  position=position_dodge(.9))+
+    geom_bar(stat="identity", 
+             position=position_dodge(), colour="white")+
+    scale_fill_manual(values=color)+
+    theme2+
+    facet_grid(variable ~., scales="free")+
+    xlab("")+
+    ylab("counts")+
+    ggtitle(name)+
+    labs(subtitle=("Mean with SEM"))
 }
 
 
-sets <- list(c("Early", "Col1a1", "Col1a2","Col15a1",  "Bgn", 'Col3a1', "Igf2","Col6a3"),
-             c("Sustained", "Lum","Col5a2","Apod", "Lama2","Pcolce", "Nid1" ),
-          c("Late",  "Nupr1","Ccl11","Igfbp2",  "Serping1", "Spp1", "Dcn", "Itih5"  )
-          ) 
+# sets <- list(c("Early", "Col1a1", "Col1a2","Col15a1",  "Bgn", 'Col3a1', "Igf2","Col6a3"),
+#              c("Sustained", "Lum","Col5a2","Apod", "Lama2","Pcolce", "Nid1" ),
+#           c("Late",  "Nupr1","Ccl11","Igfbp2",  "Serping1", "Spp1", "Dcn", "Itih5"  )
+#           ) 
 
+sets <- list(c("Mouse", "Ccdc141", "Myct1", "Hspg2", "Capg", "Smoc2", "Icam1", "Cd34", "Cxcr4", "Tnfrsf18", "Tnfrsf10b", "Il2rg"
+               ,"Pecam1", "Klhl6", "Pgm5", "Krt84", "4930509E16Rik", "Eogt", "Hmgcs2", "Hspg2", "Col4a2", "Pvr", "Hhex",
+               "Sparc", "Itpkb", "Itga2b", "Timeless", "Yes1", "4930523C07Rik", "Cd276", "Gpr160"),
+             c("Human", "Aplnr", "Aldh1a7", "Samsn1", "Itga6", "Slc16a9", "Pltp", "H2???T23",
+               "Adamts9", "Osmr", "Srgn", "Apold1", "Prdm1", "H2???Q5", "Kcnj8", "Dlc1",
+               "Klf4", "H2???Q2", "Abcc9", "Calcrl", "Utrn", "Vamp5"))
+
+# sets <- list(c("Mouse", "Ccdc141","Pecam1", "Klhl6", "Col4a2"),
+#              c("Human", "Aplnr", "Aldh1a7", "Samsn1"))
 
 library(gridExtra)
-  pdf(file="fig1.pdf",  width=4, height=18) 
-  s1=fig1plot(sets[[1]])
-  s2=fig1plot(sets[[2]])
-  s3=fig1plot(sets[[3]])
-  grid.arrange(s1, s2, s3, ncol=1)
-  dev.off()
+pdf(file="fig1.pdf",  width=4, height=28) 
+s1=fig1plot(sets[[1]])
+s2=fig1plot(sets[[2]])
+#s3=fig1plot(sets[[3]])
+#grid.arrange(s1, s2, s3, ncol=1)
+grid.arrange(s1, s2, ncol=1)
+dev.off()
 
 ```
 
@@ -561,61 +576,61 @@ library(gridExtra)
 
 sets <- list(c("Early", "Col1a1", "Col1a2","Col15a1",  "Bgn", 'Col3a1', "Igf2","Col6a3"),
              c("Sustained", "Lum","Col5a2","Apod", "Lama2","Pcolce", "Nid1" ),
-          c("Late",  "Nupr1","Ccl11","Igfbp2",  "Serping1", "Spp1", "Dcn", "Itih5"  )
-          ) 
+             c("Late",  "Nupr1","Ccl11","Igfbp2",  "Serping1", "Spp1", "Dcn", "Itih5"  )
+) 
 
 fig2plot <- function(aSet){
-
-subdata <-df2[, c("Genotype", "Day", aSet[-1])]
-subdata$Day <- as.factor(subdata$Day)
-
-
-sumTable = data.frame(Gene=character(), Day=numeric(), meanCNTRL=numeric(), meanSOD=numeric(), diff=numeric(), p.value=numeric())
-
-for(gene in colnames(subdata)[-c(1,2)]){
-  for(day in subdata$Day){
-    cntrl <- subdata[subdata$Day==day & subdata$Genotype == 'Ctr', gene]
-    sod <- subdata[subdata$Day==day & subdata$Genotype == 'SOD', gene]
-    t<- unlist(t.test(cntrl,sod))
-    p.value <- t[3]
-    cntrl.value <- t[6]
-    sod.value <- t[7]
-    diff <- as.numeric(sod.value) / as.numeric(cntrl.value)
-    entry <- data.frame (Gene=gene, Day=day, meanCNTRL=cntrl.value, meanSOD=sod.value, diff=diff, p.value=p.value)
-    sumTable = rbind(sumTable, entry)
+  
+  subdata <-df2[, c("Genotype", "Day", aSet[-1])]
+  subdata$Day <- as.factor(subdata$Day)
+  
+  
+  sumTable = data.frame(Gene=character(), Day=numeric(), meanCNTRL=numeric(), meanSOD=numeric(), diff=numeric(), p.value=numeric())
+  
+  for(gene in colnames(subdata)[-c(1,2)]){
+    for(day in subdata$Day){
+      cntrl <- subdata[subdata$Day==day & subdata$Genotype == 'Ctr', gene]
+      sod <- subdata[subdata$Day==day & subdata$Genotype == 'SOD', gene]
+      t<- unlist(t.test(cntrl,sod))
+      p.value <- t[3]
+      cntrl.value <- t[6]
+      sod.value <- t[7]
+      diff <- as.numeric(sod.value) / as.numeric(cntrl.value)
+      entry <- data.frame (Gene=gene, Day=day, meanCNTRL=cntrl.value, meanSOD=sod.value, diff=diff, p.value=p.value)
+      sumTable = rbind(sumTable, entry)
+    }
   }
-}
-sumTable$Day <- as.numeric(as.character(sumTable$Day))
-sumTable$p.value <- as.numeric(as.character(sumTable$p.value))
-sumTable$Signif <- 0
-sumTable$Signif[sumTable$p.value < 0.05] <- 1
-sumTable$Signif <- as.factor(sumTable$Signif)
-
-library(ggplot2)
-ggplot(sumTable, aes(x=Day, y=diff, color=Gene))+
-  geom_line()+
-  geom_point(aes(size=Signif))+
-  geom_hline(yintercept=1, linetype="dashed", color = "grey45", size=0.4)+
-  scale_size_manual(values=c(0,2))+
-  guides(size=FALSE)+
-  expand_limits(y=0)+
-  scale_x_continuous(breaks = c(28, 42, 56,  70,  98, 112 ,126))+
-  ggtitle(aSet[1])+
-   scale_color_brewer(palette="Spectral")+
+  sumTable$Day <- as.numeric(as.character(sumTable$Day))
+  sumTable$p.value <- as.numeric(as.character(sumTable$p.value))
+  sumTable$Signif <- 0
+  sumTable$Signif[sumTable$p.value < 0.05] <- 1
+  sumTable$Signif <- as.factor(sumTable$Signif)
+  
+  library(ggplot2)
+  ggplot(sumTable, aes(x=Day, y=diff, color=Gene))+
+    geom_line()+
+    geom_point(aes(size=Signif))+
+    geom_hline(yintercept=1, linetype="dashed", color = "grey45", size=0.4)+
+    scale_size_manual(values=c(0,2))+
+    guides(size=FALSE)+
+    expand_limits(y=0)+
+    scale_x_continuous(breaks = c(28, 42, 56,  70,  98, 112 ,126))+
+    ggtitle(aSet[1])+
+    scale_color_brewer(palette="Spectral")+
     theme(panel.background = element_rect(fill='white', colour='white'),
-        legend.position="right",legend.title=element_blank(),
-        axis.line.y = element_line(colour="grey45"), axis.title.y=element_blank(), axis.text.y = element_text(colour="grey15"), axis.ticks.y = element_line(colour="grey15"),
-        axis.text.x=element_text(colour="grey15"), axis.ticks.x = element_line(colour="grey15"), axis.line.x = element_line(colour="grey45"), axis.title.x=element_text(colour="grey45"),
-         legend.text = element_text(colour="grey45"))
+          legend.position="right",legend.title=element_blank(),
+          axis.line.y = element_line(colour="grey45"), axis.title.y=element_blank(), axis.text.y = element_text(colour="grey15"), axis.ticks.y = element_line(colour="grey15"),
+          axis.text.x=element_text(colour="grey15"), axis.ticks.x = element_line(colour="grey15"), axis.line.x = element_line(colour="grey45"), axis.title.x=element_text(colour="grey45"),
+          legend.text = element_text(colour="grey45"))
 }
 
 library(gridExtra)
-  pdf(file="fig2.pdf",  width=4, height=8) 
-  s1=fig2plot(sets[[1]])
-  s2=fig2plot(sets[[2]])
-  s3=fig2plot(sets[[3]])
-  grid.arrange(s1, s2, s3, ncol=1)
-  dev.off()
+pdf(file="fig2.pdf",  width=4, height=8) 
+s1=fig2plot(sets[[1]])
+s2=fig2plot(sets[[2]])
+s3=fig2plot(sets[[3]])
+grid.arrange(s1, s2, s3, ncol=1)
+dev.off()
 
 ```
 
