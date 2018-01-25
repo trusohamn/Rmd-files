@@ -14,10 +14,10 @@ output: word_document
 
 ```{r dataLoad1, echo=FALSE, include=FALSE, eval = TRUE}
 rm(list=ls()) 
-#wd = "C:/Users/Marta/Desktop/sebastian/expression"
+wd = "C:/Users/Marta/Desktop/sebastian/expression"
 #wd = "C:/Users/mlecz_000/Desktop/sebastian/expression"
 #setwd("C:/Users/Marta/Desktop/Sebastian/expression")
-wd <- "C:/Users/martal1/ownCloud/Desktop/sebastian/expression"
+#wd <- "C:/Users/martal1/ownCloud/Desktop/sebastian/expression"
 setwd(wd)
 load("merged_ForSeb.Rda" )
 
@@ -377,15 +377,14 @@ plot3_withName <- function(gen){
 
 ```{r drawPlots}
 
-#genes <- c("Itih5", "Nupr1", "Serping1", "Aif1", "Gfap", "Icam1")
-#genes <- c("Ldoc1", "Sv2b", "Car1", "Car4")
-# Error in FUN(X[[i]], ...) : object 'KRTAP1' not found //////Krtap1-5
-#Error in FUN(X[[i]], ...) : object 'KRTAP1' not found
-genes <- colnames(myFullData)[-(1:4)] 
-#genes <- c("A830018L16Rik")
-#genes <- colnames(myFullData)[7370] 
-setwd(paste0("E:/Marta/Sebastian/g3")) 
+genes <- c("Aif1", "Gfap", "Sv2b", "Aqp4", "Lpl")
 
+#genes <- colnames(myFullData)[-(1:4)] 
+
+#setwd(paste0("E:/Marta/Sebastian/g3")) 
+
+wd = "C:/Users/Marta/Desktop/sebastian/expression"
+setwd(wd)
 library(gridExtra)
 
 for (gen in genes) {
