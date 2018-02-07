@@ -5,15 +5,13 @@ date: "05/02/2018"
 output: word_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ## R Markdown
 
 ```{r}
 library(reshape2)
-setwd("C:/Users/Marta/Dropbox/To blind for Marta/2017.08.23 VLMC timecourse")
+wd <- "C:/Users/Marta/Dropbox/To blind for Marta/2017.08.23 VLMC timecourse"
+setwd(wd)
 #mydata <-read.csv2("Col1a1.csv", header=TRUE,dec = ".", na.strings = "NA" )
 #mydata <-read.csv2("Col6a1.csv", header=TRUE,dec = ".", na.strings = "NA" )
 mydata <-read.csv2("SPP1.csv", header=TRUE,dec = ".", na.strings = "NA" )
@@ -21,7 +19,7 @@ mydata <-read.csv2("SPP1.csv", header=TRUE,dec = ".", na.strings = "NA" )
 ```
 
 ```{r}
-setwd("C:/Users/Marta/Dropbox/To blind for Marta/2017.08.23 VLMC timecourse")
+setwd(wd)
 library(reshape2)
 names <- c("Col1a1","Col6a1", "SPP1" )
 #dir()
@@ -60,7 +58,7 @@ for(name in names){
 
 ```
 
-```{r}
+```{r summarySE}
 summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
                       conf.interval=.95, .drop=TRUE) {
   library(plyr)
@@ -102,9 +100,10 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
 
 
 
-```{r}
+```{r perRoi}
 library(ggplot2)
-setwd("C:/Users/Marta/Dropbox/To blind for Marta/2017.08.23 VLMC timecourse")
+wd <- "E:/Dropbox/Sebastian/3 proteins 20171215/data"
+setwd(wd)
 names <- c("Col1a1","Col6a", "SPP1" )
 
 for(name in names){
@@ -117,26 +116,26 @@ for(name in names){
     labs( y=name, size="Vessel size")
   
   
-  pdf(file= paste0(name,"_areaFr.pdf"),  width=4, height=8) 
+  #pdf(file= paste0(name,"_areaFr.pdf"),  width=4, height=8) 
   print(plot)
-  dev.off()
+  #dev.off()
   
 }
 
 ```
 
-```{r}
+```{r total per mouse}
 library(ggplot2)
-setwd("C:/Users/Marta/Dropbox/To blind for Marta/2017.08.23 VLMC timecourse")
+setwd(wd)
 names <- c("Col1a1","Col6a1", "SPP1" )
 #dir()
 for(name in names){
   #name = "Col6a1"
   mydata <-read.csv2(paste0(name, "_total.csv"), header=TRUE,dec = ".", na.strings = "NA" )
-
+  
   
   tgc <- summarySE(mydata, measurevar="mean_prot", groupvars=c("phen", "timepoint", "mouse"))
-  
+  tgc$phen <- factor(tgc$phen, c("D", "1", "2"))
   
   plot <- ggplot(mydata, aes(x=timepoint, y=mean_prot, color=phen)) +
     geom_point(position=position_jitterdodge(dodge.width=0.8), alpha = 0.7) +
@@ -146,19 +145,29 @@ for(name in names){
     labs( title = "intensity per image", y=name)
   
   
-    plotMouse <- ggplot(tgc, aes(x=timepoint, y=mean_prot, color=phen)) +
+  plotMouseFacet <- ggplot(tgc, aes(x=phen, y=mean_prot, color=phen)) +
     geom_point(position=position_jitterdodge(dodge.width=0.8), alpha = 0.7) +
-    geom_boxplot(alpha = 0.2) +
-    theme(panel.background = element_rect(fill='white', colour='black'), 
-          legend.position="right")+
-    labs( title = "intensity per image", y=name)
-    
-  pdf(file= paste0(name,"_intensityPerImage.pdf"),  width=4, height=8) 
-  print(plot)
-  dev.off()
+    geom_boxplot(width = 1, alpha = 0.2) +
+    theme(panel.background = element_rect(fill='white', colour='white'), 
+          legend.position="right", axis.line.y =element_line(colour="black"),
+           axis.text.x=element_blank(), axis.ticks.x = element_blank()
+          )+
+     facet_grid(~timepoint,  scales = "free_x", space = "free_x")
+  
+    # plotMouse <- ggplot(tgc, aes(x=timepoint, y=mean_prot, color=phen)) +
+    # geom_point(position=position_jitterdodge(dodge.width=0.8), alpha = 0.7) +
+    # geom_boxplot(width = 1, alpha = 0.2) +
+    # theme(panel.background = element_rect(fill='white', colour='white'), 
+    #       legend.position="right", axis.line.y =element_line(colour="black"), axis.line.x =element_line(colour="black")
+    #       )+
+    # labs( title = "intensity per mouse", y=name)
+  
+  #pdf(file= paste0(name,"_intensityPerImage.pdf"),  width=4, height=8) 
+  #print(plot)
+  #dev.off()
   
   pdf(file= paste0(name,"_intensityPerMouse.pdf"),  width=4, height=8) 
-  print(plotMouse)
+  print(plotMouseFacet)
   dev.off()
 }
 
