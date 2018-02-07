@@ -128,30 +128,50 @@ for(name in names){
 library(ggplot2)
 setwd(wd)
 names <- c("Col1a1","Col6a1", "SPP1" )
+#names <- c("Col1a1" )
 #dir()
 for(name in names){
   #name = "Col6a1"
   mydata <-read.csv2(paste0(name, "_total.csv"), header=TRUE,dec = ".", na.strings = "NA" )
-  
+  color <- c("blue", "red", "darkgreen"  )
   
   tgc <- summarySE(mydata, measurevar="mean_prot", groupvars=c("phen", "timepoint", "mouse"))
-  tgc$phen <- factor(tgc$phen, c("D", "1", "2"))
+  tgc$phen <- factor(tgc$phen, c("1", "2", "D"))
   
-  plot <- ggplot(mydata, aes(x=timepoint, y=mean_prot, color=phen)) +
-    geom_point(position=position_jitterdodge(dodge.width=0.8), alpha = 0.7) +
+  plot <- ggplot(mydata, aes(x=phen, y=mean_prot, color=phen, fill=phen)) +
     geom_boxplot(alpha = 0.2) +
-    theme(panel.background = element_rect(fill='white', colour='black'), 
-          legend.position="right")+
-    labs( title = "intensity per image", y=name)
+    geom_point(position=position_jitterdodge(dodge.width=0.8), alpha = 0.7, size=2.5) +
+    scale_fill_manual(values=color)+
+    scale_colour_manual(values = color)+
+        theme(panel.background = element_rect(fill='white', colour='white'), 
+          legend.position="right", axis.line.y =element_line(colour="black"),
+           axis.text.x=element_blank(), axis.ticks.x = element_blank()
+          )+
+    labs( title = "intensity per image", y=name)+
+    facet_grid(~timepoint,  scales = "free_x", space = "free_x")
+  
+    plot2 <- ggplot(mydata, aes(x=mouse, y=mean_prot, color=phen, fill=phen)) +
+    geom_boxplot(alpha = 0.2) +
+    geom_point(position=position_jitterdodge(dodge.width=0.8), alpha = 0.7, size=1.5) +
+    scale_fill_manual(values=color)+
+    scale_colour_manual(values = color)+
+        theme(panel.background = element_rect(fill='white', colour='white'), 
+          legend.position="right", axis.line.y =element_line(colour="black"),
+          )+
+    labs( title = "intensity per image", y=name)+
+    facet_grid(~timepoint,  scales = "free_x", space = "free_x")
   
   
-  plotMouseFacet <- ggplot(tgc, aes(x=phen, y=mean_prot, color=phen)) +
-    geom_point(position=position_jitterdodge(dodge.width=0.8), alpha = 0.7) +
+  plotMouseFacet <- ggplot(tgc, aes(x=phen, y=mean_prot, color=phen, fill=phen)) +
     geom_boxplot(width = 1, alpha = 0.2) +
+    geom_point(position=position_jitterdodge(dodge.width=0.8), alpha = 0.7, size=2.5) +
+    scale_fill_manual(values=color)+
+    scale_colour_manual(values = color)+
     theme(panel.background = element_rect(fill='white', colour='white'), 
           legend.position="right", axis.line.y =element_line(colour="black"),
            axis.text.x=element_blank(), axis.ticks.x = element_blank()
           )+
+    labs( title = "intensity per mouse", y="intensity")+
      facet_grid(~timepoint,  scales = "free_x", space = "free_x")
   
     # plotMouse <- ggplot(tgc, aes(x=timepoint, y=mean_prot, color=phen)) +
@@ -162,13 +182,17 @@ for(name in names){
     #       )+
     # labs( title = "intensity per mouse", y=name)
   
-  #pdf(file= paste0(name,"_intensityPerImage.pdf"),  width=4, height=8) 
-  #print(plot)
-  #dev.off()
+  # pdf(file= paste0(name,"_intensityPerImage.pdf"),  width=4, height=8)
+  # print(plot2)
+  # dev.off()
   
-  pdf(file= paste0(name,"_intensityPerMouse.pdf"),  width=4, height=8) 
-  print(plotMouseFacet)
+  pdf(file= paste0(name,"_intensityPerImagePerMouse.pdf"),  width=4, height=8)
+  print(plot2)
   dev.off()
+  
+  #pdf(file= paste0(name,"_intensityPerMouse.pdf"),  width=4, height=8) 
+  #print(plotMouseFacet)
+  #dev.off()
 }
 
 
