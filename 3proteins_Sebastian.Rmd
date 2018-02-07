@@ -1,0 +1,171 @@
+---
+title: "3proteins_Sebastian"
+author: "Marta"
+date: "6 grudnia 2017"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(reshape2)
+setwd("C:/Users/Marta/Dropbox/To blind for Marta/2017.08.23 VLMC timecourse")
+#mydata <-read.csv2("Col1a1.csv", header=TRUE,dec = ".", na.strings = "NA" )
+#mydata <-read.csv2("Col6a1.csv", header=TRUE,dec = ".", na.strings = "NA" )
+mydata <-read.csv2("SPP1.csv", header=TRUE,dec = ".", na.strings = "NA" )
+
+```
+
+```{r}
+setwd("C:/Users/Marta/Dropbox/To blind for Marta/2017.08.23 VLMC timecourse")
+library(reshape2)
+names <- c("Col1a1","Col6a1", "SPP1" )
+#dir()
+for(name in names){
+  mydata <-read.csv2(paste0(name,".csv"), header=TRUE,dec = ".", na.strings = "NA" )
+  df = mydata[0:3]
+  for (a in (1:19)){
+    prevInt = paste0("IntDen",a-1)
+    intensity = paste0("IntDen",a)
+    diffLabel = paste0("",a)
+    df[diffLabel] = 100*(mydata[intensity] - mydata[prevInt])/ mydata[prevInt]
+    
+  }
+  
+  df$phen <- as.factor(df$phen)
+  
+  datalong <- melt(df, id.vars = c("timepoint","phen", "name"), 
+                   measure.vars = colnames(df)[4:22])  
+  
+  
+  tgc <- summarySE(datalong, measurevar="value", groupvars=c("phen", "variable"))
+  tgc$variable = as.numeric(tgc$variable)
+  
+  library(ggplot2)
+  
+  # Standard error of the mean
+  plotSpec <- ggplot(tgc, aes(x=variable, y=value, colour=phen)) + 
+    geom_errorbar(aes(ymin=value-se, ymax=value+se), width=.1) +
+    geom_line() +
+    geom_point()
+  
+  pdf(file= paste0(name,"_vesselSpec.pdf"),  width=6, height=4) 
+  print(plotSpec)
+  dev.off()
+}
+
+```
+
+```{r}
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+  library(plyr)
+  
+  # New version of length which can handle NA's: if na.rm==T, don't count them
+  length2 <- function (x, na.rm=FALSE) {
+    if (na.rm) sum(!is.na(x))
+    else       length(x)
+  }
+  
+  # This does the summary. For each group's data frame, return a vector with
+  # N, mean, and sd
+  datac <- ddply(data, groupvars, .drop=.drop,
+                 .fun = function(xx, col) {
+                   c(N    = length2(xx[[col]], na.rm=na.rm),
+                     mean = mean   (xx[[col]], na.rm=na.rm),
+                     sd   = sd     (xx[[col]], na.rm=na.rm)
+                   )
+                 },
+                 measurevar
+  )
+  
+  # Rename the "mean" column    
+  datac <- rename(datac, c("mean" = measurevar))
+  
+  datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+  
+  # Confidence interval multiplier for standard error
+  # Calculate t-statistic for confidence interval: 
+  # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+  ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+  datac$ci <- datac$se * ciMult
+  
+  return(datac)
+}
+
+```
+
+
+
+
+```{r}
+library(ggplot2)
+setwd("C:/Users/Marta/Dropbox/To blind for Marta/2017.08.23 VLMC timecourse")
+names <- c("Col1a1","Col6a", "SPP1" )
+
+for(name in names){
+  mydata <-read.csv2(paste0(name, "_intensity.csv"), header=TRUE,dec = ".", na.strings = "NA" )
+  
+  plot <- ggplot(mydata, aes(x=timepoint, y=areafr_prot, size=area_roiEnlarged, color=phen)) +
+    geom_point(position=position_jitterdodge(dodge.width=0.8), alpha = 0.2) +
+    theme(panel.background = element_rect(fill='white', colour='black'), 
+          legend.position="right")+
+    labs( y=name, size="Vessel size")
+  
+  
+  pdf(file= paste0(name,"_areaFr.pdf"),  width=4, height=8) 
+  print(plot)
+  dev.off()
+  
+}
+
+```
+
+```{r}
+library(ggplot2)
+setwd("C:/Users/Marta/Dropbox/To blind for Marta/2017.08.23 VLMC timecourse")
+names <- c("Col1a1","Col6a1", "SPP1" )
+#dir()
+for(name in names){
+  #name = "Col6a1"
+  mydata <-read.csv2(paste0(name, "_total.csv"), header=TRUE,dec = ".", na.strings = "NA" )
+
+  
+  tgc <- summarySE(mydata, measurevar="mean_prot", groupvars=c("phen", "timepoint", "mouse"))
+  
+  
+  plot <- ggplot(mydata, aes(x=timepoint, y=mean_prot, color=phen)) +
+    geom_point(position=position_jitterdodge(dodge.width=0.8), alpha = 0.7) +
+    geom_boxplot(alpha = 0.2) +
+    theme(panel.background = element_rect(fill='white', colour='black'), 
+          legend.position="right")+
+    labs( title = "intensity per image", y=name)
+  
+  
+    plotMouse <- ggplot(tgc, aes(x=timepoint, y=mean_prot, color=phen)) +
+    geom_point(position=position_jitterdodge(dodge.width=0.8), alpha = 0.7) +
+    geom_boxplot(alpha = 0.2) +
+    theme(panel.background = element_rect(fill='white', colour='black'), 
+          legend.position="right")+
+    labs( title = "intensity per image", y=name)
+    
+  pdf(file= paste0(name,"_intensityPerImage.pdf"),  width=4, height=8) 
+  print(plot)
+  dev.off()
+  
+  pdf(file= paste0(name,"_intensityPerMouse.pdf"),  width=4, height=8) 
+  print(plotMouse)
+  dev.off()
+}
+
+
+```
+
+
+
+
+
