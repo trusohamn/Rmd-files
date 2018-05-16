@@ -10,12 +10,17 @@ output: word_document
 #install.packages("ggsignif")
 #install.packages("gridExtra")
 #install.packages("reshape")
+#for griding plots:
+#if(!require(devtools)) install.packages("devtools")
+#devtools::install_github("kassambara/ggpubr")
+#install.packages("ggpubr")
+#install.packages("gridGraphics")
 ```
 
 ```{r dataLoad1, echo=FALSE, include=FALSE, eval = TRUE}
 rm(list=ls()) 
-wd = "C:/Users/Marta/Desktop/sebastian/expression"
-#wd = "C:/Users/mlecz_000/Desktop/sebastian/expression"
+# wd = "C:/Users/Marta/Desktop/sebastian/expression"
+wd = "C:/Users/mlecz_000/Desktop/sebastian/expression"
 #setwd("C:/Users/Marta/Desktop/Sebastian/expression")
 #wd <- "C:/Users/martal1/ownCloud/Desktop/sebastian/expression"
 setwd(wd)
@@ -374,6 +379,41 @@ plot3_withName <- function(gen){
 
 
 ```
+
+```{r}
+library(ggplot2)
+# library(ggpubr)
+library(gridExtra)
+p1 <- plot1(gen)
+p2 <- plot2(gen)
+p3 <- plot3(gen)
+n <- ggplot()
+gs = c(p1, p2, p3)
+lay <- rbind(c(1,1,4,2,4,3),
+             c(1,1,4,5,4,5))
+
+grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,1,10,1,4), heights= c(14,1))
+
+    png(file=paste0("test", ".png"), res=325, width=2500, height = 1750) 
+    grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,1,10,1,4), heights= c(14,1))
+    dev.off()
+    
+ # grid.arrange(p1, grid.arrange(
+ #              p2, n, p3, n, n, n, nrow = 2, ncol= heights = c(3, 1)),
+ #              nrow = 1, ncol=2, widths = c(1,1))
+ 
+# ggarrange(p1, NULL, 
+#             ggarrange(p2, NULL, p3, NULL, NULL, NULL,
+#             ncol = 3, nrow = 2, 
+#             widths = c(4, 1, 4), heights = c(4,1)),
+#           ncol = 2, nrow = 1, widths = (c(1, 2))
+#          )
+# 
+# library("cowplot")
+# ggdraw()
+# draw_plot(p1, x = 0, y = 0, width = 1, height = 1)
+```
+
 
 ```{r drawPlots}
 
