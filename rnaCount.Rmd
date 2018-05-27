@@ -162,51 +162,6 @@ plot1 <- function(gen){
 print(plot1(gen))
 ```
 
-```{r boxplot1_level2, echo=FALSE, dpi=300, fig.width=8, fig.height=8, dev.args=list(pointsize=16), eval=FALSE} 
-library(ggplot2)
-ggplot(myFullData, aes_string(x="level2class" , y=gen)) +
-  geom_jitter(aes(color=level1class ), size=1.5, alpha=0.1, position = position_jitter(width = .05))+
-  geom_boxplot(aes(fill=level1class), outlier.colour = NA, alpha = 0.2)+
-  theme(panel.background = element_rect(fill='white', colour='black'), 
-        legend.position="right",
-        axis.text.x = element_text(angle = 90, hjust = 1))+
-  xlab("")+
-  ylab("counts")+
-  ggtitle(gen)
-
-
-```
-
-```{r time_plot, echo=FALSE, dpi=300, fig.width=8, fig.height=8, dev.args=list(pointsize=16), eval=FALSE}
-
-
-data_summary <- function(data, varname, groupnames){
-  require(plyr)
-  summary_func <- function(x, col){
-    c(mean = mean(x[[col]], na.rm=TRUE),
-      sd = sd(x[[col]], na.rm=TRUE))
-  }
-  data_sum<-ddply(data, groupnames, .fun=summary_func,
-                  varname)
-  return(data_sum)
-}
-
-ds <- data_summary(df2, varname=gen, groupnames=c("Genotype", "Day"))
-
-
-
-ggplot(ds, aes(x=Day, y=mean, group=Genotype, color=Genotype)) + 
-  geom_line(size=1.5) +
-  ylab("")+
-  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2,
-                position=position_dodge(0.05))+
-  ggtitle(gen)+
-  geom_point(color="black", size=3)+
-  theme(panel.background = element_rect(fill='white', colour='black'),
-        legend.position="right")
-
-```
-
 ```{r time_plot_boxplot, echo=FALSE, dpi=300, fig.width=8, fig.height=8, dev.args=list(pointsize=16)}
 color <- (c("#01abff", "#d82101"))
 
@@ -258,34 +213,6 @@ plot2<-function(gen){
 
 print(plot2(gen))
 
-
-```
-
-
-```{r fold_plot, echo=FALSE, dpi=300, fig.width=6, fig.height=8, dev.args=list(pointsize=16), eval=FALSE}
-library(ggplot2)
-ds <- data_summary(df2, varname=gen, groupnames=c("Genotype", "Day"))
-df3<-df2[,c("Genotype", "Day", gen)]
-
-for(entry in rownames(df3)){
-  av<-ds[ds$Genotype=="Ctr"& ds$Day==df3[entry,"Day"], "mean"]
-  df3[entry, gen]=df3[entry, gen]/av
-}
-
-ds2 <- data_summary(df3, varname=gen, groupnames=c("Genotype", "Day"))
-ds2<- ds2[ds2$Genotype=="SOD"&ds$Day %in% c(56,  70,  98, 112 ,126),]
-
-ggplot(ds2, aes(x=Day, y=mean)) +
-  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=1, size=0.8,
-                position=position_dodge(0.05), color="darkgray")+
-  geom_line(color="lightblue", size=1.5) +
-  geom_point(aes(color=mean), size=3)+
-  ylab("")+
-  ggtitle(gen)+
-  theme(panel.background = element_rect(fill='white', colour='white'),
-        legend.position="none",legend.title=element_blank(),
-        axis.line.y = element_blank(), axis.title.y=element_blank(), axis.text.y = element_text(colour="grey"), axis.ticks.y = element_blank(),
-        axis.text.x=element_blank(), axis.ticks.x = element_blank(), axis.line.x = element_blank(), axis.title.x=element_blank())
 
 ```
 
@@ -380,39 +307,6 @@ plot3_withName <- function(gen){
 
 ```
 
-```{r}
-library(ggplot2)
-# library(ggpubr)
-library(gridExtra)
-p1 <- plot1(gen)
-p2 <- plot2(gen)
-p3 <- plot3(gen)
-n <- ggplot()
-gs = c(p1, p2, p3)
-lay <- rbind(c(1,1,4,2,4,3),
-             c(1,1,4,5,4,5))
-
-grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,1,10,1,4), heights= c(14,1))
-
-    png(file=paste0("test", ".png"), res=325, width=2500, height = 1750) 
-    grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,1,10,1,4), heights= c(14,1))
-    dev.off()
-    
- # grid.arrange(p1, grid.arrange(
- #              p2, n, p3, n, n, n, nrow = 2, ncol= heights = c(3, 1)),
- #              nrow = 1, ncol=2, widths = c(1,1))
- 
-# ggarrange(p1, NULL, 
-#             ggarrange(p2, NULL, p3, NULL, NULL, NULL,
-#             ncol = 3, nrow = 2, 
-#             widths = c(4, 1, 4), heights = c(4,1)),
-#           ncol = 2, nrow = 1, widths = (c(1, 2))
-#          )
-# 
-# library("cowplot")
-# ggdraw()
-# draw_plot(p1, x = 0, y = 0, width = 1, height = 1)
-```
 
 
 ```{r drawPlots}
@@ -680,3 +574,25 @@ dev.off()
 
 
 
+```{r testingOutline, eval=FALSE, include=FALSE}
+library(ggplot2)
+library(gridExtra)
+
+gens <- c("Col1a1", "Col1a2","Col15a1",  "Bgn", 'Col3a1', "Igf2","Col6a3")
+lay <- rbind(c(1,1,4,2,4,3),
+             c(1,1,4,5,4,5))
+wd = "C:/Users/mlecz_000/Desktop/sebastian/expression/testOverlay"
+setwd(wd)
+
+for(gen in gens){
+  p1 <- plot1(gen)
+  p2 <- plot2(gen)
+  p3 <- plot3(gen)
+  grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,1,10,1,4), heights= c(14,1))
+    png(file=paste0(gen, ".png"), res=325, width=2500, height = 1750) 
+    grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,2,12,2,6), heights= c(8,1))
+    dev.off()
+}
+
+    
+```
