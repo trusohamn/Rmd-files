@@ -1,4 +1,4 @@
----
+ ---
 title: "rnaCountSeb"
 author: "Marta"
 output: word_document
@@ -121,7 +121,7 @@ df2$Day <- as.numeric(as.character(df2$Day))
 ```
 
 ```{r chooseGene, echo=FALSE}
-gen="Gfap"
+gen="Prn"
 ```
 
 ```{r specPlot, echo=FALSE, dpi=300, fig.width=5, fig.height=8, dev.args=list(pointsize=16)}
@@ -311,17 +311,18 @@ plot3_withName <- function(gen){
 
 ```{r drawPlots}
 
-genes <- c("Aif1", "Gfap", "Sv2b", "Aqp4", "Lpl")
+genes <- c("Prn")
 
-#genes <- colnames(myFullData)[-(1:4)] 
+#genes <- colnames(myFullData)[-(1:20980)] 
+lay <- rbind(c(1,1,4,2,4,3),
+             c(1,1,4,5,4,5))
 
-#setwd(paste0("E:/Marta/Sebastian/g3")) 
-
-wd = "C:/Users/Marta/Desktop/sebastian/expression"
+wd = "C:/Users/mlecz_000/Desktop/sebastian/expression/website"
 setwd(wd)
 library(gridExtra)
 
 for (gen in genes) {
+  print(gen)
   if (!(substr(gen, 0, 1) %in% c(0,1,2,3,4,5,6,7,8,9))){
     filename = gen
     #spec
@@ -366,7 +367,7 @@ for (gen in genes) {
     
     filename = tolower(filename)
     png(file=paste0(filename, ".png"), res=325, width=2500, height = 1750) 
-    grid.arrange(p1, p2, p3, nrow = 1, widths = c(5,7,3))
+       grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,2,12,2,6), heights= c(8,1))
     dev.off()
   }
 }
@@ -588,7 +589,6 @@ for(gen in gens){
   p1 <- plot1(gen)
   p2 <- plot2(gen)
   p3 <- plot3(gen)
-  grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,1,10,1,4), heights= c(14,1))
     png(file=paste0(gen, ".png"), res=325, width=2500, height = 1750) 
     grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,2,12,2,6), heights= c(8,1))
     dev.off()
