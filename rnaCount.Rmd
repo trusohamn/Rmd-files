@@ -1,4 +1,4 @@
- ---
+---
 title: "rnaCountSeb"
 author: "Marta"
 output: word_document
@@ -20,8 +20,8 @@ output: word_document
 ```{r dataLoad1, echo=FALSE, include=FALSE, eval = TRUE}
 rm(list=ls()) 
 # wd = "C:/Users/Marta/Desktop/sebastian/expression"
-wd = "C:/Users/mlecz_000/Desktop/sebastian/expression"
-#setwd("C:/Users/Marta/Desktop/Sebastian/expression")
+#wd = "C:/Users/mlecz_000/Desktop/sebastian/expression"
+wd = ("C:/Users/Marta/Desktop/Sebastian/expression")
 #wd <- "C:/Users/martal1/ownCloud/Desktop/sebastian/expression"
 setwd(wd)
 load("merged_ForSeb.Rda" )
@@ -121,7 +121,7 @@ df2$Day <- as.numeric(as.character(df2$Day))
 ```
 
 ```{r chooseGene, echo=FALSE}
-gen="Prn"
+gen="Gfap"
 ```
 
 ```{r specPlot, echo=FALSE, dpi=300, fig.width=5, fig.height=8, dev.args=list(pointsize=16)}
@@ -367,7 +367,7 @@ for (gen in genes) {
     
     filename = tolower(filename)
     png(file=paste0(filename, ".png"), res=325, width=2500, height = 1750) 
-       grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,2,12,2,6), heights= c(8,1))
+    grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,2,12,2,6), heights= c(8,1))
     dev.off()
   }
 }
@@ -380,6 +380,7 @@ for (gen in genes) {
 
 ```{r figureSpec, echo=FALSE, dpi=300, fig.width=5, fig.height=8, dev.args=list(pointsize=16)}
 library(reshape)
+library(ggplot2)
 ## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
 ##   data: a data frame.
 ##   measurevar: the name of a column that contains the variable to be summariezed
@@ -401,6 +402,7 @@ data_summary <- function(data, varname, groupnames){
 summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
                       conf.interval=.95, .drop=TRUE) {
   library(plyr)
+  
   
   # New version of length which can handle NA's: if na.rm==T, don't count them
   length2 <- function (x, na.rm=FALSE) {
@@ -493,20 +495,20 @@ fig1plot  <- function(genes){
 
 
 sets <- list(c("EC Down (mouse)",
-"Itm2a", "Emcn", "Ccm2l", "Apcdd1", "Slc35f2", "Slco1c1", "Tmem204", "Eif2ak2", "Pggt1b", "Slc25a53", "Erap1", "Calcrl", "Foxc1", "Ebf1", "Cav2", "Cnot6l", "Mitd1", "Itgb1", "Atp13a5"),
-
-c("Pericytes Down (mouse)",
-"Atp13a5", "Ccm2l", "Gulp1", "Erap1", "Wisp1", "Ebf1", "Foxd1", "Hey2", "Plxdc2", "Acer3", "Cav2", "Slc35f2", "Calcrl", "Itgb1" ))
+               "Itm2a", "Emcn", "Ccm2l", "Apcdd1", "Slc35f2", "Slco1c1", "Tmem204", "Eif2ak2", "Pggt1b", "Slc25a53", "Erap1", "Calcrl", "Foxc1", "Ebf1", "Cav2", "Cnot6l", "Mitd1", "Itgb1", "Atp13a5"),
+             
+             c("Pericytes Down (mouse)",
+               "Atp13a5", "Ccm2l", "Gulp1", "Erap1", "Wisp1", "Ebf1", "Foxd1", "Hey2", "Plxdc2", "Acer3", "Cav2", "Slc35f2", "Calcrl", "Itgb1" ))
 
 
 library(gridExtra)
-pdf(file="fig1.pdf",  width=4, height=28) 
+#pdf(file="fig1.pdf",  width=4, height=28) 
 s1=fig1plot(sets[[1]])
 s2=fig1plot(sets[[2]])
 #s3=fig1plot(sets[[3]])
 #grid.arrange(s1, s2, s3, ncol=1)
 grid.arrange(s1, s2, ncol=1)
-dev.off()
+#dev.off()
 
 ```
 
@@ -564,12 +566,12 @@ fig2plot <- function(aSet){
 }
 
 library(gridExtra)
-pdf(file="fig2.pdf",  width=4, height=8) 
+#pdf(file="fig2.pdf",  width=4, height=8) 
 s1=fig2plot(sets[[1]])
 s2=fig2plot(sets[[2]])
 s3=fig2plot(sets[[3]])
 grid.arrange(s1, s2, s3, ncol=1)
-dev.off()
+#dev.off()
 
 ```
 
@@ -589,10 +591,10 @@ for(gen in gens){
   p1 <- plot1(gen)
   p2 <- plot2(gen)
   p3 <- plot3(gen)
-    png(file=paste0(gen, ".png"), res=325, width=2500, height = 1750) 
-    grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,2,12,2,6), heights= c(8,1))
-    dev.off()
+  png(file=paste0(gen, ".png"), res=325, width=2500, height = 1750) 
+  grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,2,12,2,6), heights= c(8,1))
+  dev.off()
 }
 
-    
+
 ```

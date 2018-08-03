@@ -1,0 +1,1231 @@
+---
+title: "Cohort6 20170821"
+author: "Marta Alabrudzinska"
+output:
+word_document:
+reference_docx: my_template.docx
+pdf_document: default
+html_document: default
+---
+## Changes
+I've made visualisations of dependence of filaments straightness and diameter to the length of the filament  
+(graphs in the end of the file)
+I've decided that it is difficult to make a threshold of length of the filament, 
+but I've come with an idea of new, weighted by length parameters:  
+-normalised streightness -> NormStraightness  
+-normalised Diameter -> NormDiameter  
+
+algorithm : mean ( for each filament {parameterOfFilament*lengthOfFilament} ) - it is bad!!!
+algorithm : sum(parameterOfFilament*lengthOfFilament)/ sum(lengthOfFilament) ) 
+
+I've includedd:  
+-timelapse graphs of new parameter and some boxplots of W4 timepoint and diff.parameter 
+-diff.Diameter, diff.Straightness - difference between W4 and W1 normalised parameters  
+-some new scaterplots  
+
+
+-the difference of volume of islet between W4 and W1 (my measurments, not yet Mirelas) 
+
+##Changes 20170621  
+Stratification into 3 groups -  
+- Growing rate below 2 - NotTransformed 
+- 2-4 - Transformed
+- >4 - Tumor
+Mirelas measurements of volume are used for this stratification
+
+Differences between Week2- Week1, Week3-Week2, Week4-Week3 are plotted
+
+##Changes 20170628
+
+I would like to see the following scatter plots: 
+Vascular Volume week 1 vs diff. Volume Mirela  
+Vascular Volume week 2 vs diff. Volume Mirela  
+Branching Points week 1 vs diff. Volume Mirela  
+Branching Points week 2 vs diff. Volume Mirela  
+Vascular Length week 1 vs diff. Volume Mirela  
+Vascular Length week 2 vs diff. Volume Mirela  
+
+I would like to see the following box plots:  
+Vascular Volume week 1 vs Not transformed / Transformed / Tumor  
+Vascular Volume week 2 vs diff. Not transformed / Transformed / Tumor  
+Branching Points week 1 vs diff. Not transformed / Transformed / Tumor  
+Branching Points week 2 vs diff. Not transformed / Transformed / Tumor  
+Vascular Length week 1 vs diff. Not transformed / Transformed / Tumor  
+Vascular Length week 2 vs diff. Not transformed / Transformed / Tumor 
+
+##Changes 20170711  
+Vascular Volume week 1 - 4 (separate plots for each time-point) vs NotTransformed, Transformed, Tumor    
+Branching Points week 1 - 4 (separate plots for each time-point) vs NotTransformed, Transformed, Tumor  
+Vascular Length week 1 - 4 (separate plots for each time-point) vs NotTransformed, Transformed, Tumor  
+NormDiameter week 1 - 4 (separate plots for each time-point) vs NotTransformed, Transformed, Tumor  
+NormStraightness week 1 - 4 (separate plots for each time-point) vs NotTransformed, Transformed, Tumor 
+
+##Changes 20170718
+New data - after dilating and centring in imaris  
+
+##Changes 20170807
+My volume measurments are still used for two islets due to lack of data from Mirela  
+New cleaning of dilated images  
+Adding significance to graphs http://www.sthda.com/english/wiki/add-p-values-and-significance-levels-to-ggplots
+
+##Changes 20170809  
+New graphs - in scatter plots VolumeMirela.W1 used  
+NormDiameterW4 for NonTransformed Islets
+
+##Changes 20170815
+Graphs with significance between different timepoints
+
+##Changes 20170821
+Separate RT2 and wt graphs
+
+##Changes 20180102
+Two strat groups
+graphs graphics
+
+##Changes 20180731
+grpahs without strats:
+While writing I realised that it would be good to perform the vascular data analysis between the entire RT2 group vs the entire RT2.RIPVEGB group. Therefore asking you to perform the same analysis that now exists with the divided groups (growth <2 and >2), also for the the entire groups
+
+
+```{r data_gathering, echo=FALSE, include=FALSE, eval = FALSE}
+require(XLConnect)
+library(dplyr)
+#if(!require(devtools)) install.packages("devtools")
+#devtools::install_github("kassambara/ggpubr")
+
+#changed excel format in Imaris 4 - name of variable instead of Value name of column
+
+setwd("E:/Marta/PROJECTS/161214 Cohort 6/DATA20170717")
+list <- list.files(path = ".", pattern = "*.xls" , all.files = FALSE,
+                   full.names = FALSE, recursive = FALSE,
+                   ignore.case = FALSE, include.dirs = FALSE, no.. = FALSE)
+
+#NAME LISTS
+islet <- c()
+week <- c()
+gen <- c()
+mouse <- c()
+#PARAMETERS LISTS
+v_dl <- c()
+v_ds <- c()
+v_dmd <- c()
+v_fdl <- c()
+v_fndbp <- c()
+#v_ov_points <-c()
+v_fvs <- c()
+
+for(f in list) {
+  
+  wb = loadWorkbook(f)
+  
+  # LOAD DATA
+  overall = readWorksheet(wb, sheet = "Overall", startRow = 2, header = TRUE)
+  dl = readWorksheet(wb, sheet = "Dendrite Length", startRow = 2, header = TRUE)
+  ds = readWorksheet(wb, sheet = "Dendrite Straightness", startRow = 2, header = TRUE)
+  dmd = readWorksheet(wb, sheet = "Dendrite Mean Diameter", startRow = 2, header = TRUE)
+  fndbp = readWorksheet(wb, sheet = "Filament No. Dendrite Branc-18", startRow = 2, header = TRUE)
+  fdl = readWorksheet(wb, sheet = "Filament Dendrite Length (sum)", startRow = 2, header = TRUE)
+  fvs =readWorksheet(wb, sheet = "Filament Dendrite Volume (sum)", startRow = 2, header = TRUE)
+  
+  #EXTRACT ISLET NO AND WEEK
+  fullname <- strsplit(f, "_")
+  gen <- c(gen, fullname[[1]][1])
+  mouse <- c(mouse, fullname[[1]][2])
+  islet <- c(islet, paste(fullname[[1]][1:3],collapse=" ")) 
+  week <- substr(c(week, fullname[[1]][4]),1,2)
+  
+  #EXTRACT DATA SUM (really inefficient way but works)
+  value <- select(dl, Dendrite.Length) %>% unlist %>% sum
+  v_dl <- c(v_dl, value)
+  
+  value <- select(ds, Dendrite.Straightness) %>% unlist %>% mean
+  v_ds <- c(v_ds, value)
+  
+  value <- select(dmd, Dendrite.Mean.Diameter) %>% unlist %>% mean
+  v_dmd <- c(v_dmd, value)
+  
+  value <- select(fndbp, Filament.No..Dendrite.Branch.Pts) %>% unlist %>% sum
+  v_fndbp <- c(v_fndbp, value)
+  
+  value <- select(fdl, Filament.Dendrite.Length..sum.) %>% unlist %>% sum
+  v_fdl <- c(v_fdl, value)
+  
+  value <- select(fvs, Filament.Dendrite.Volume..sum.) %>% unlist %>% sum
+  v_fvs <- c(v_fvs, value)
+  
+  #value <- filter(overall, Variable=="Pt Total Number of Points") %>%  select(Value)%>% unlist
+  #v_ov_points <- c(v_ov_points, value)
+  
+  
+}
+#GENERATE RESULT TABLE
+result <- data.frame(Genotype = gen, Mouse = mouse, Islet = islet, Week = week ,
+                     Dendrite_Length = v_dl, Dendrite_Straightness = v_ds,
+                     Dendrite_Mean_Diameter = v_dmd,
+                     Filament_Dendrite_Length_sum = v_fdl, 
+                     Filament_NoDendrite_Branch_Pts = v_fndbp, 
+                     Filament_Dendrite_Volume_sum =v_fvs)
+
+
+#################################################
+#SAVE RESULTS
+#################################################
+writeWorksheetToFile("results20170714.xls", result, "one")
+
+#install.packages("gdata")
+library(gdata)
+keep(result, list=character(0), all=FALSE, sure=TRUE)
+
+
+```
+
+```{r reorganization, echo=FALSE, include=FALSE, eval = FALSE}
+#################################################
+#REORGANIZATION INTO TABLES
+#################################################
+#install.packages("dplyr")
+#install.packages("XLConnect")
+library(plyr)
+library(dplyr)
+require(XLConnect)
+
+output <-"cleaned_20170608.xlsx"
+setwd("E:/Marta/PROJECTS/161214 Cohort 6/data processing")
+result <-read.csv2("cleaned_20170608.csv", header=TRUE,dec = ".", na.strings = "NA")
+
+n_islet <- length(unique(result$Islet))
+islets<-unique(select(result, Islet)) %>% unlist
+
+#Dendrite Length
+DL<-data.frame()
+for(i in 1:n_islet){
+  n<-as.character(islets[i])
+  w1 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W1" )%>% select(Dendrite_Length)%>% unlist%>%unname
+  if(length(w1)==0) w1 = NA;
+  w2 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W2" )%>% select(Dendrite_Length)%>% unlist%>%unname
+  if(length(w2)==0) w2 = NA;
+  w3 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W3" )%>% select(Dendrite_Length)%>% unlist%>%unname
+  if(length(w3)==0) w3 = NA;
+  w4 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W4" )%>% select(Dendrite_Length)%>% unlist%>%unname
+  if(length(w4)==0) w4 = NA;
+  newrow <- data.frame(Islet = n, W1 = w1, W2 =w2, W3 = w3, W4 =w4)
+  print(newrow)
+  DL = rbind(DL,newrow)
+}
+writeWorksheetToFile(output, DL, "Dendrite Length")
+
+#Dendrite Straightness
+DS<-data.frame()
+for(i in 1:n_islet){
+  n<-as.character(islets[i])
+  w1 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W1" )%>% select(Dendrite_Straightness)%>% unlist%>%unname
+  if(length(w1)==0) w1 = NA;
+  w2 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W2" )%>% select(Dendrite_Straightness)%>% unlist%>%unname
+  if(length(w2)==0) w2 = NA;
+  w3 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W3" )%>% select(Dendrite_Straightness)%>% unlist%>%unname
+  if(length(w3)==0) w3 = NA;
+  w4 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W4" )%>% select(Dendrite_Straightness)%>% unlist%>%unname
+  if(length(w4)==0) w4 = NA;
+  newrorow <- data.frame(Islet = n, W1 = w1, W2 =w2, W3 = w3, W4 =w4)
+  print(newrow)
+  DS = rbind(DS,newrow)
+}
+writeWorksheetToFile(output, DS, "Dendrite Straightness")
+
+#Dendrite_Mean_Diameter
+DMD<-data.frame()
+for(i in 1:n_islet){
+  n<-as.character(islets[i])
+  w1 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W1" )%>% select(Dendrite_Mean_Diameter)%>% unlist%>%unname
+  if(length(w1)==0) w1 = NA;
+  w2 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W2" )%>% select(Dendrite_Mean_Diameter)%>% unlist%>%unname
+  if(length(w2)==0) w2 = NA;
+  w3 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W3" )%>% select(Dendrite_Mean_Diameter)%>% unlist%>%unname
+  if(length(w3)==0) w3 = NA;
+  w4 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W4" )%>% select(Dendrite_Mean_Diameter)%>% unlist%>%unname
+  if(length(w4)==0) w4 = NA;
+  newrow <- data.frame(Islet = n, W1 = w1, W2 =w2, W3 = w3, W4 =w4)
+  print(newrow)
+  DMD = rbind(DMD,newrow)
+}
+writeWorksheetToFile(output, DMD, "Dendrite_Mean_Diameter")
+
+#Filament_NoDendrite_Branch_Pts
+BP<-data.frame()
+for(i in 1:n_islet){
+  n<-as.character(islets[i])
+  w1 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W1" )%>% select(Filament_NoDendrite_Branch_Pts)%>% unlist%>%unname
+  if(length(w1)==0) w1 = NA;
+  w2 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W2" )%>% select(Filament_NoDendrite_Branch_Pts)%>% unlist%>%unname
+  if(length(w2)==0) w2 = NA;
+  w3 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W3" )%>% select(Filament_NoDendrite_Branch_Pts)%>% unlist%>%unname
+  if(length(w3)==0) w3 = NA;
+  w4 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W4" )%>% select(Filament_NoDendrite_Branch_Pts)%>% unlist%>%unname
+  if(length(w4)==0) w4 = NA;
+  newrow <- data.frame(Islet = n, W1 = w1, W2 =w2, W3 = w3, W4 =w4)
+  print(newrow)
+  BP = rbind(BP,newrow)
+}
+writeWorksheetToFile(output, BP, "Filament_NoDendrite_Branch_Pts")
+
+#Filament_Dendrite_Volume_sum
+V<-data.frame()
+for(i in 1:n_islet){
+  n<-as.character(islets[i])
+  w1 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W1" )%>% select(Filament_Dendrite_Volume_sum)%>% unlist%>%unname
+  if(length(w1)==0) w1 = NA;
+  w2 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W2" )%>% select(Filament_Dendrite_Volume_sum)%>% unlist%>%unname
+  if(length(w2)==0) w2 = NA;
+  w3 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W3" )%>% select(Filament_Dendrite_Volume_sum)%>% unlist%>%unname
+  if(length(w3)==0) w3 = NA;
+  w4 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W4" )%>% select(Filament_Dendrite_Volume_sum)%>% unlist%>%unname
+  if(length(w4)==0) w4 = NA;
+  newrow <- data.frame(Islet = n, W1 = w1, W2 =w2, W3 = w3, W4 =w4)
+  print(newrow)
+  V = rbind(V,newrow)
+}
+writeWorksheetToFile(output,V, "Filament_Dendrite_Volume_sum")
+
+
+#VOLUME
+VV<-data.frame()
+for(i in 1:n_islet){
+  n<-as.character(islets[i])
+  w1 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W1" )%>% select(VOLUME)%>% unlist%>%unname
+  if(length(w1)==0) w1 = NA;
+  w2 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W2" )%>% select(VOLUME)%>% unlist%>%unname
+  if(length(w2)==0) w2 = NA;
+  w3 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W3" )%>% select(VOLUME)%>% unlist%>%unname
+  if(length(w3)==0) w3 = NA;
+  w4 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W4" )%>% select(VOLUME)%>% unlist%>%unname
+  if(length(w4)==0) w4 = NA;
+  newrow <- data.frame(Islet = n, W1 = w1, W2 =w2, W3 = w3, W4 =w4)
+  print(newrow)
+  VV = rbind(VV,newrow)
+}
+writeWorksheetToFile(output,VV, "VolumeIslet")
+
+#Length.Volume
+LV<-data.frame()
+for(i in 1:n_islet){
+  n<-as.character(islets[i])
+  w1 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W1" )%>% select(Length.Volume)%>% unlist%>%unname
+  if(length(w1)==0) w1 = NA;
+  w2 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W2" )%>% select(Length.Volume)%>% unlist%>%unname
+  if(length(w2)==0) w2 = NA;
+  w3 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W3" )%>% select(Length.Volume)%>% unlist%>%unname
+  if(length(w3)==0) w3 = NA;
+  w4 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W4" )%>% select(Length.Volume)%>% unlist%>%unname
+  if(length(w4)==0) w4 = NA;
+  newrow <- data.frame(Islet = n, W1 = w1, W2 =w2, W3 = w3, W4 =w4)
+  print(newrow)
+  LV = rbind(LV,newrow)
+}
+writeWorksheetToFile(output,LV, "Length.Volume")
+
+#VascVolume.Volume
+VaV<-data.frame()
+for(i in 1:n_islet){
+  n<-as.character(islets[i])
+  w1 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W1" )%>% select(VascVolume.Volume)%>% unlist%>%unname
+  if(length(w1)==0) w1 = NA;
+  w2 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W2" )%>% select(VascVolume.Volume)%>% unlist%>%unname
+  if(length(w2)==0) w2 = NA;
+  w3 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W3" )%>% select(VascVolume.Volume)%>% unlist%>%unname
+  if(length(w3)==0) w3 = NA;
+  w4 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W4" )%>% select(VascVolume.Volume)%>% unlist%>%unname
+  if(length(w4)==0) w4 = NA;
+  newrow <- data.frame(Islet = n, W1 = w1, W2 =w2, W3 = w3, W4 =w4)
+  print(newrow)
+  VaV = rbind(VaV,newrow)
+}
+writeWorksheetToFile(output,VaV, "VascVolume.Volume")
+
+#BranchingPoints.Volume
+BV<-data.frame()
+for(i in 1:n_islet){
+  n<-as.character(islets[i])
+  w1 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W1" )%>% select(BranchingPoints.Volume)%>% unlist%>%unname
+  if(length(w1)==0) w1 = NA;
+  w2 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W2" )%>% select(BranchingPoints.Volume)%>% unlist%>%unname
+  if(length(w2)==0) w2 = NA;
+  w3 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W3" )%>% select(BranchingPoints.Volume)%>% unlist%>%unname
+  if(length(w3)==0) w3 = NA;
+  w4 <- filter(result, Islet == islets[[i]] ) %>% filter(Week == "W4" )%>% select(BranchingPoints.Volume)%>% unlist%>%unname
+  if(length(w4)==0) w4 = NA;
+  newrow <- data.frame(Islet = n, W1 = w1, W2 =w2, W3 = w3, W4 =w4)
+  print(newrow)
+  BV = rbind(BV,newrow)
+}
+writeWorksheetToFile(output,BV, "BranchingPoints.Volume")
+
+rm(list=ls()) ## removes any objects in your workspace
+
+```
+
+```{r loadData, echo=FALSE, include=FALSE}
+
+rm(list=ls()) ## removes any objects in your workspace
+
+#install.packages('Epi') ## the first time you use a package you need to install
+#install.packages('knitr')
+#install.packages('tableone')
+#install.packages('ReporteRs')
+#install.packages('reshape2')
+
+## Load required packages
+library(Epi) ## cal.yr
+library(knitr) ## kable
+library(plyr)
+
+#LOAD DATA
+#setwd("E:/Marta/PROJECTS/161214 Cohort 6/data_processing_newdata")
+mydata <-read.csv2("Cohort6_20170807.csv", header=TRUE,dec = ".", na.strings = "NA" )
+mydata <- mydata[(mydata$Genotype)!="",] #remove empty entries
+
+mydata$Genotype <- factor(mydata$Genotype, c("wt", "RipVEGFB", "RT2", "RT2.RipVEGFB"))
+```
+
+```{r dendrit_list, eval = TRUE, echo=FALSE, include = FALSE}
+##################################
+#GENERATE A DATABASE OF DENDRITES#
+##################################
+#install.packages("dplyr")
+#install.packages("XLConnect")
+require(XLConnect)
+library(dplyr)
+
+
+#setwd("E:/Marta/PROJECTS/161214 Cohort 6/DATA20170713")
+setwd("./DATA20170713")
+list <- list.files(path = ".", pattern = "*.xls" , all.files = FALSE,
+                   full.names = FALSE, recursive = FALSE,
+                   ignore.case = FALSE, include.dirs = FALSE, no.. = FALSE)
+
+
+dendrite.list <- data.frame(Genotype = factor(), Mouse=factor(), Islet= factor(), Week = factor(), ID=numeric(), 
+                            Dendrite_Length = numeric(), Dendrite_Straightness = numeric(), 
+                            Dendrite_Mean_Diameter = numeric())
+
+
+for(f in list){
+  wb = loadWorkbook(f)
+  
+  dl = readWorksheet(wb, sheet = "Dendrite Length", startRow = 2, header = TRUE)
+  ds = readWorksheet(wb, sheet = "Dendrite Straightness", startRow = 2, header = TRUE)
+  dmd = readWorksheet(wb, sheet = "Dendrite Mean Diameter", startRow = 2, header = TRUE)
+  
+  
+  #EXTRACT ISLET NO AND WEEK
+  fullname <- strsplit(f, "_")
+  gen <- fullname[[1]][1]
+  mouse <- fullname[[1]][2]
+  islet <- paste(fullname[[1]][1:3],collapse=" ") 
+  week <- substr(fullname[[1]][4],1,2)
+  
+  
+  length <- length(dl$ID)
+  
+  tempdata <- data.frame(Genotype = rep(gen, length), 
+                         Mouse= rep(mouse, length), 
+                         Islet= rep(islet, length),
+                         Week = rep(week, length), 
+                         ID=dl$ID, 
+                         Dendrite_Length = dl$Dendrite.Length, 
+                         Dendrite_Straightness = ds$Dendrite.Straightness, 
+                         Dendrite_Mean_Diameter = dmd$Dendrite.Mean.Diameter)
+  
+  dendrite.list <- rbind(dendrite.list, tempdata)
+  
+}
+
+
+
+
+```
+
+```{r norm.Straightness, eval = TRUE, echo=FALSE}
+library(plyr)
+normStraightness <- ddply(dendrite.list, c("Genotype", "Mouse", "Islet", "Week"), summarise, 
+                          NormStraightness= sum(Dendrite_Length*Dendrite_Straightness)/sum(Dendrite_Length)
+) 
+normDiameter <- ddply(dendrite.list, c("Genotype", "Mouse", "Islet", "Week"), summarise, 
+                      NormDiameter= sum(Dendrite_Length*Dendrite_Mean_Diameter)/sum(Dendrite_Length)
+) 
+
+mydata <- merge(mydata,normStraightness,by=c("Genotype", "Mouse", "Islet", "Week"))
+mydata <- merge(mydata,normDiameter,by=c("Genotype", "Mouse", "Islet", "Week"))
+
+```
+
+```{r reshape, echo=FALSE, include=FALSE}
+
+#DATA REARANGMENT
+mydata$Genotype <- factor(mydata$Genotype)
+mydata$Week <- factor(mydata$Week)
+
+library(reshape2)
+datawide <- reshape(mydata, idvar=c("Genotype", "Mouse", "Islet"  ), direction="wide", timevar="Week")
+
+
+str(mydata)
+table(mydata$Mouse)
+table(mydata$Genotype)
+islets <- table(datawide$Genotype)
+
+#add difference between Week 4 and 1
+
+datawide$diff.VascVolume.Volume <- datawide$VascVolume.Volume.W4/datawide$VascVolume.Volume.W1
+datawide$diff.Length.Volume <- datawide$Length.Volume.W4/datawide$Length.Volume.W1
+datawide$diff.BranchingPoints.Volume <- datawide$BranchingPoints.Volume.W4/datawide$BranchingPoints.Volume.W1
+datawide$diff.Volume <- datawide$VOLUME.W4/datawide$VOLUME.W1
+datawide$diff.NormDiameter <- datawide$NormDiameter.W4/datawide$NormDiameter.W1
+datawide$diff.NormStraightness <- datawide$NormStraightness.W4  / datawide$NormStraightness.W1
+datawide$diff.VolumeMirela <- datawide$VolumeMirela.W4/datawide$VolumeMirela.W1
+
+
+vars <- c("Length.Volume", "VascVolume.Volume", "BranchingPoints.Volume", "NormStraightness", "NormDiameter", "VolumeMirela" )
+for(var in vars){
+  datawide[ paste(var, "diff.W2.W1", sep = ".")] = datawide[, paste(var, "W2", sep = ".")]/datawide[, paste(var, "W1", sep = ".")]
+  datawide[ paste(var, "diff.W3.W2", sep = ".")] = datawide[, paste(var, "W3", sep = ".")]/datawide[, paste(var, "W2", sep = ".")]
+  datawide[ paste(var, "diff.W4.W3", sep = ".")] = datawide[, paste(var, "W4", sep = ".")]/datawide[, paste(var, "W3", sep = ".")]
+}
+
+```
+
+```{r stratification,  echo=FALSE}
+datawide <-datawide[datawide$diff.VolumeMirela!=0,]
+
+datawide$group = 0 
+datawide$group[datawide$diff.VolumeMirela<2]="NotTransformed"
+datawide$group[datawide$diff.VolumeMirela>=2 ]="Transformed"
+#datawide$group[datawide$diff.VolumeMirela>=4]="Tumor"
+datawide$group <- as.factor(datawide$group)
+
+datawide$group <- factor(datawide$group, c("NotTransformed", "Transformed", "Tumor"))
+
+tab <- table(datawide$group, datawide$Genotype)
+library(gridExtra)
+library(grid)
+tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
+grid.table(tab, theme=tt)
+grid.newpage()
+
+
+datawideNormal <- subset(datawide, Genotype %in% c("wt","RipVEGFB"))
+datawideTumor <- subset(datawide, Genotype %in% c("RT2","RT2.RipVEGFB"))
+
+```
+
+```{r overview, echo=FALSE}
+
+islets.Genotype <- table(datawide$Genotype)
+islets.Mouse <- table(datawide$Genotype,datawide$Mouse)
+
+kable(islets.Genotype, col.names = c("Genotype","number of islets"))
+
+kable(islets.Mouse)
+
+
+
+```
+
+```{r myplot, echo=FALSE, eval=FALSE}
+library(ggplot2)
+#install.packages("ggpubr")
+library(ggpubr)
+myplot <- function(par){
+  ggplot(subset(datawide, group %in% c("NotTransformed","Transformed", "Tumor")),
+         aes_string(x="group",
+                    y=par,
+                    fill="Genotype"))+
+    geom_boxplot(alpha = 0.1, outlier.colour = NA, position = position_dodge(width=1))+
+    geom_point(aes(color= Genotype), position=position_jitterdodge(dodge.width=1.1))+
+    theme(panel.background = element_rect(fill='white', colour='black'))+
+    ggtitle(par)+
+    stat_compare_means(aes(group=Genotype), label = "p.signif")
+}
+myplot_line <- function(par){
+  ggplot(subset(datawide, group %in% c("NotTransformed","Transformed", "Tumor")),
+         aes_string(x="group",
+                    y=par,
+                    fill="Genotype"))+
+    geom_boxplot(alpha = 0.1, outlier.colour = NA, position = position_dodge(width=1))+
+    geom_point(aes(color= Genotype), position=position_jitterdodge(dodge.width=1.1))+
+    theme(panel.background = element_rect(fill='white', colour='black'))+
+    ggtitle(par)+
+    geom_hline(yintercept = 1, colour="grey") +
+    stat_compare_means(aes(group=Genotype), label = "p.format", size=4)
+}
+```
+
+
+```{r stratifiedPlots, echo=FALSE, dpi=300, fig.width=6, fig.height=6,warning = FALSE, eval=FALSE}
+
+vars <- c("VascVolume.Volume.W1", "VascVolume.Volume.W2", "BranchingPoints.Volume.W1", "BranchingPoints.Volume.W2", "Length.Volume.W1", "Length.Volume.W2")
+
+for (var in vars) {
+  print(myplot(var))
+}
+
+vars <- c("diff.VascVolume.Volume", "diff.Length.Volume", "diff.VolumeMirela", "diff.NormDiameter",
+          "diff.BranchingPoints.Volume")
+
+for (var in vars) {
+  print(myplot_line(var))
+}
+print(myplot("VascVolume.Volume.W1"))
+
+```
+
+```{r stratifiedPlotsWeekByWeekRT2, echo=FALSE, dpi=300, fig.width=10,warning = FALSE, fig.height=8,}
+library(reshape2)
+library(ggplot2)
+library(ggpubr)
+colors <- c("gray", "red")
+myplot2 <- function(var){
+  dmelt <- melt(datawideTumor, id.vars = c("Genotype","Mouse","Islet", "group"), 
+                measure.vars = c(paste(var, "diff.W2.W1", sep="."),
+                                 paste(var, "diff.W3.W2", sep="."),
+                                 paste(var, "diff.W4.W3", sep="."),
+                                 paste("diff", var , sep=".")
+                ))  
+    ggplot(dmelt, aes(x = group, y = value,fill= Genotype))+
+    geom_hline(yintercept = 1, colour="grey", linetype = 2) +
+    geom_boxplot(alpha = 0.3, outlier.colour = NA, position = position_dodge(width=0.8), size = 0.7)+
+    geom_point(aes(fill=Genotype), color="black", position=position_jitterdodge(dodge.width=0.8), shape=21, stroke=0.7, size=0.7)+
+    scale_fill_manual(values=colors)+
+    scale_color_manual(values=colors)+  
+          theme(panel.background = element_blank(),  
+          legend.position = "none", 
+          axis.text.y = element_text(size=7,  face="bold"),
+          axis.line.y =element_blank(),
+          axis.ticks.y = element_line(colour="black", size=1.1),
+          axis.text.x = element_blank(),
+          axis.line.x =element_blank(),
+          axis.ticks.x = element_blank(),
+          #strip.text = element_text(colour = 'black', face="bold", size=15), 
+          strip.text = element_blank(),
+          strip.background =element_rect(fill="white"),
+            plot.title = element_text(size = 8, face = "bold")
+    )+
+    facet_wrap(~ variable, ncol=4)+
+    ggtitle(paste("Difference week by week and total of: ", var, sep=""))+
+    #stat_compare_means(aes(group=Genotype), label = "p.format", size=2)+
+    
+        xlab("")+
+    ylab("")
+}
+
+
+vars <- c("Length.Volume", "NormDiameter", "NormStraightness", "BranchingPoints.Volume", "VascVolume.Volume" )
+for (var in vars) {
+  print(myplot2(var))
+  dev.copy2pdf(file=paste(var, "_RT2_Differences.pdf"),useDingbats=FALSE,family="sans", width=4, height=4)
+  dev.off()
+}
+
+```
+
+```{r stratifiedPlotsEachTimepointRT2, echo=FALSE, dpi=300, fig.width=10,warning = FALSE, fig.height=8,}
+library(reshape2)
+library(ggplot2)
+library(ggsignif)
+library(ggpubr)k
+colors <- c("gray", "red")
+myplot3 <- function(var){
+  dmelt <- melt(datawideTumor, id.vars = c("Genotype","Mouse","Islet", "group"), 
+                measure.vars = c(paste(var, "W1", sep="."),
+                                 paste(var, "W2", sep="."),
+                                 paste(var, "W3", sep="."),
+                                 paste(var, "W4", sep=".")
+                ))  
+    ggplot(dmelt, aes(x = group, y = value,fill= Genotype))+
+
+    geom_boxplot(alpha = 0.3, outlier.colour = NA, position = position_dodge(width=0.8), size = 0.3)+
+    geom_point(aes(fill=Genotype), color="black", position=position_jitterdodge(dodge.width=0.8), shape=21, stroke=0.3, size=1.2)+
+    scale_fill_manual(values=colors)+
+    scale_color_manual(values=colors)+  
+          theme(panel.background = element_blank(),  
+          legend.position = "none", 
+          axis.text.y = element_text(size=7,  face="bold"),
+          axis.line.y =element_blank(),
+          axis.ticks.y = element_line(colour="black", size=1.1),
+          axis.text.x = element_blank(),
+          axis.line.x =element_blank(),
+          axis.ticks.x = element_blank(),
+          #strip.text = element_text(colour = 'black', face="bold", size=15), 
+          strip.text = element_blank(),
+          strip.background =element_rect(fill="white"),
+            plot.title = element_text(size = 8, face = "bold")
+    )+
+    stat_compare_means(aes(group=Genotype), label = "p.format", size=2)+
+    facet_wrap(~ variable, ncol=4)+
+    ggtitle(paste("Values week by week of: ", var, sep=""))+
+        xlab("")+
+    ylab("")
+  
+}
+
+
+vars <- c("Length.Volume", "NormDiameter", "NormStraightness", "BranchingPoints.Volume", "VascVolume.Volume" )
+for (var in vars) {
+  print(myplot3(var))
+  dev.copy2pdf(file=paste(var, "_RT2_TimePoints.pdf"),useDingbats=FALSE,family="sans", width=4, height=4)
+  dev.off()
+}
+
+```
+
+```{r NOTstratifiedPlotsWeekByWeekRT2, echo=FALSE, dpi=300, fig.width=10,warning = FALSE, fig.height=8,}
+#install.packages("ggpubr")
+library(reshape2)
+#install.packages('ggplot2')
+#library(ggplot2)
+library(ggpubr)
+library(ggsignif)
+
+colors <- c("gray", "red")
+myplot2 <- function(var){
+  dmelt <- melt(datawideTumor, id.vars = c("Genotype","Mouse","Islet", "group"), 
+                measure.vars = c(paste(var, "diff.W2.W1", sep="."),
+                                 paste(var, "diff.W3.W2", sep="."),
+                                 paste(var, "diff.W4.W3", sep="."),
+                                 paste("diff", var , sep=".")
+                ))  
+  #dmelt <- na.omit(dmelt)
+    ggplot(dmelt, aes(x = Genotype, y = value,fill= Genotype))+
+    geom_hline(yintercept = 1, colour="grey", linetype = 2) +
+    geom_boxplot(alpha = 0.3, outlier.colour = NA, position = position_dodge(width=0.8), size = 0.7)+
+    geom_point(aes(fill=Genotype), color="black", position=position_jitterdodge(dodge.width=0.8), shape=21, stroke=0.7, size=0.7)+
+    scale_fill_manual(values=colors)+
+    scale_color_manual(values=colors)+  
+          theme(panel.background = element_blank(),  
+          legend.position = "none", 
+          axis.text.y = element_text(size=7,  face="bold"),
+          axis.line.y =element_blank(),
+          axis.ticks.y = element_line(colour="black", size=1.1),
+          axis.text.x = element_blank(),
+          axis.line.x =element_blank(),
+          axis.ticks.x = element_blank(),
+          #strip.text = element_text(colour = 'black', face="bold", size=15), 
+          strip.text = element_blank(),
+          strip.background =element_rect(fill="white"),
+            plot.title = element_text(size = 8, face = "bold")
+    )+
+    facet_wrap(~ variable, ncol=4)+
+    ggtitle(paste("Difference week by week and total of: ", var, sep=""))+
+    stat_compare_means(aes(group=Genotype), label = "p.format", size=2, method = "t.test")+
+    
+        xlab("")+
+    ylab("")
+
+}
+
+
+vars <- c("Length.Volume", "NormDiameter", "NormStraightness", "BranchingPoints.Volume", "VascVolume.Volume" )
+for (var in vars) {
+  print(myplot2(var))
+  dev.copy2pdf(file=paste(var, "_RT2_Differences_notStrat_ttest.pdf"),useDingbats=FALSE,family="sans", width=4, height=4)
+  dev.off()
+}
+
+
+
+```
+
+```{r NOTstratifiedPlotsEachTimepointRT2, echo=FALSE, dpi=300, fig.width=10,warning = FALSE, fig.height=8,}
+library(reshape2)
+library(ggplot2)
+library(ggsignif)
+library(ggpubr)
+colors <- c("gray", "red")
+myplot3 <- function(var){
+  dmelt <- melt(datawideTumor, id.vars = c("Genotype","Mouse","Islet", "group"), 
+                measure.vars = c(paste(var, "W1", sep="."),
+                                 paste(var, "W2", sep="."),
+                                 paste(var, "W3", sep="."),
+                                 paste(var, "W4", sep=".")
+                ))  
+    ggplot(dmelt, aes(x = Genotype, y = value,fill= Genotype))+
+
+    geom_boxplot(alpha = 0.3, outlier.colour = NA, position = position_dodge(width=0.8), size = 0.3)+
+    geom_point(aes(fill=Genotype), color="black", position=position_jitterdodge(dodge.width=0.8), shape=21, stroke=0.3, size=1.2)+
+    scale_fill_manual(values=colors)+
+    scale_color_manual(values=colors)+  
+          theme(panel.background = element_blank(),  
+          legend.position = "none", 
+          axis.text.y = element_text(size=7,  face="bold"),
+          axis.line.y =element_blank(),
+          axis.ticks.y = element_line(colour="black", size=1.1),
+          axis.text.x = element_blank(),
+          axis.line.x =element_blank(),
+          axis.ticks.x = element_blank(),
+          #strip.text = element_text(colour = 'black', face="bold", size=15), 
+          strip.text = element_blank(),
+          strip.background =element_rect(fill="white"),
+            plot.title = element_text(size = 8, face = "bold")
+    )+
+    stat_compare_means(aes(group=Genotype), label = "p.format", size=2, method = "t.test")+
+    facet_wrap(~ variable, ncol=4)+
+    ggtitle(paste("Values week by week of: ", var, sep=""))+
+        xlab("")+
+    ylab("")
+  
+}
+
+
+vars <- c("Length.Volume", "NormDiameter", "NormStraightness", "BranchingPoints.Volume", "VascVolume.Volume" )
+for (var in vars) {
+  print(myplot3(var))
+  dev.copy2pdf(file=paste(var, "_RT2_TimePoints_notStrat_ttest.pdf"),useDingbats=FALSE,family="sans", width=4, height=4)
+  dev.off()
+}
+
+```
+
+```{r stratifiedPlotsWeekByWeekWT, echo=FALSE, dpi=300, fig.width=10,warning = FALSE, fig.height=8,}
+library(reshape2)
+library(ggplot2)
+library(ggpubr)
+colors <- c("darkgray", "blue")
+myplot2 <- function(var){
+  dmelt <- melt(datawideNormal, id.vars = c("Genotype","Mouse","Islet"), 
+                measure.vars = c(paste(var, "diff.W2.W1", sep="."),
+                                 paste(var, "diff.W3.W2", sep="."),
+                                 paste(var, "diff.W4.W3", sep="."),
+                                 paste("diff", var , sep=".")
+                ))  
+  ggplot(dmelt, aes(x = Genotype, y = value,fill= Genotype))+
+    geom_hline(yintercept = 1, colour="grey", linetype = 2) +
+    geom_boxplot(alpha = 0.3, outlier.colour = NA, position = position_dodge(width=0.8), size = 1)+
+    geom_point(aes(fill=Genotype), color="black", position=position_jitterdodge(dodge.width=0.8), shape=21, stroke=1, size=1.5)+
+    scale_fill_manual(values=colors)+
+    scale_color_manual(values=colors)+
+        theme(panel.background = element_blank(),  
+          legend.position = "none", 
+          axis.text.y = element_text(size=10,  face="bold"),
+          axis.line.y =element_blank(),
+          axis.ticks.y = element_line(colour="black", size=1.1),
+          axis.text.x = element_blank(),
+          axis.line.x =element_blank(),
+          axis.ticks.x = element_blank(),
+          #strip.text = element_text(colour = 'black', face="bold", size=15), 
+          strip.text = element_blank(),
+          strip.background =element_rect(fill="white"),
+            plot.title = element_text(size = 8, face = "bold")
+    )+
+    facet_wrap(~ variable, ncol=4)+
+    ggtitle(paste("Difference week by week and total of: ", var, sep=""))+
+    stat_compare_means(aes(group=Genotype), label = "p.format", size=3)+
+    
+    xlab("")+
+    ylab("")
+}
+
+
+vars <- c("Length.Volume", "NormDiameter", "NormStraightness", "BranchingPoints.Volume", "VascVolume.Volume" )
+for (var in vars) {
+  print(myplot2(var))
+  dev.copy2pdf(file=paste(var, "_WT_Differences.pdf"),useDingbats=FALSE,family="sans", width=4, height=4)
+  dev.off()
+}
+
+```
+
+
+```{r stratifiedPlotsEachTimepointWT, echo=FALSE, dpi=300, fig.width=10,warning = FALSE, fig.height=8}
+library(reshape2)
+library(ggplot2)
+library(ggsignif)
+library(ggpubr)
+colors <- c("darkgray", "blue")
+myplot3 <- function(var){
+  dmelt <- melt(datawideNormal, id.vars = c("Genotype","Mouse","Islet", "group"), 
+                measure.vars = c(paste(var, "W1", sep="."),
+                                 paste(var, "W2", sep="."),
+                                 paste(var, "W3", sep="."),
+                                 paste(var, "W4", sep=".")
+                ))  
+  
+  ggplot(dmelt, aes(x = Genotype, y = value,fill= Genotype))+
+    geom_boxplot(alpha = 0.3, outlier.colour = NA, position = position_dodge(width=0.8), size = 0.3)+
+    geom_point(aes(fill=Genotype), color="black", position=position_jitterdodge(dodge.width=0.8), shape=21, stroke=0.3, size=1.5)+
+    scale_fill_manual(values=colors)+
+    scale_color_manual(values=colors)+
+    
+    theme(panel.background = element_blank(),  
+          legend.position = "none", 
+          axis.text.y = element_text(size=10,  face="bold"),
+          axis.line.y =element_blank(),
+          axis.ticks.y = element_line(colour="black", size=0.5),
+          axis.text.x = element_blank(),
+          axis.line.x =element_blank(),
+          axis.ticks.x = element_blank(),
+          #strip.text = element_text(colour = 'black', face="bold", size=15), 
+          strip.text = element_blank(),
+          strip.background =element_rect(fill="white"),
+            plot.title = element_text(size = 8, face = "bold")
+    )+
+    
+    stat_compare_means(aes(group=Genotype), label = "p.format", size=3)+
+    facet_wrap(~ variable, ncol=4)+
+    ggtitle(paste("Values week by week of: ", var, sep=""))+
+    xlab("")+
+    ylab("")
+  
+}
+
+
+vars <- c("Length.Volume", "NormDiameter", "NormStraightness", "BranchingPoints.Volume", "VascVolume.Volume" )
+for (var in vars) {
+  print(myplot3(var))
+  dev.copy2pdf(file=paste(var, "_WT_TimePoints.pdf"),useDingbats=FALSE,family="sans", width=4, height=4)
+  dev.off()
+}
+
+```
+
+```{r stratifiedPlotsEachTimepointEachGroup, echo=FALSE, eval=FALSE, dpi=300, fig.width=9,warning = FALSE, fig.height=12}
+library(reshape2)
+library(ggplot2)
+library(ggsignif)
+
+myplot3 <- function(var){
+  my_comparisons <- list(c(paste(var, "W1", sep="."), paste(var, "W2", sep=".")),
+                         c(paste(var, "W2", sep="."), paste(var, "W3", sep=".")),
+                         c(paste(var, "W3", sep="."), paste(var, "W4", sep=".")),
+                         c(paste(var, "W1", sep="."), paste(var, "W4", sep=".")))
+  
+  dmelt <- melt(datawide, id.vars = c("Genotype","Mouse","Islet", "group"), 
+                measure.vars = c(paste(var, "W1", sep="."),
+                                 paste(var, "W2", sep="."),
+                                 paste(var, "W3", sep="."),
+                                 paste(var, "W4", sep=".")
+                ))  
+  
+  ggplot(dmelt, aes(variable, value))+
+    geom_boxplot(alpha = 0.1, outlier.colour = NA)+
+    geom_point(aes(color= Genotype), position=position_jitterdodge(dodge.width=1.0))+
+    theme(panel.background = element_rect(fill='white', colour='black'),  axis.text.x = element_text(angle = 90, hjust = 1),legend.position = "bottom")+
+    geom_signif(comparisons = my_comparisons, map_signif_level=TRUE, step_increase =0.1)+
+    facet_grid(Genotype~group  )+
+    ggtitle(paste("Values week by week of: ", var, sep=""))
+  
+}
+
+
+vars <- c("Length.Volume", "NormDiameter", "NormStraightness", "BranchingPoints.Volume", "VolumeMirela", "VascVolume.Volume" )
+for (var in vars) {
+  print(myplot3(var))
+}
+
+
+
+```
+
+```{r NormDiameterW4NonTransformed, eval=FALSE,echo=FALSE, dpi=300, fig.width=10,warning = FALSE, fig.height=12 }
+my_comparisons <- list(c( "wt", "RipVEGFB" ), c("RT2","RT2.RipVEGFB"))
+nonTransfored <- datawide[datawide$group=="NotTransformed",]
+library(reshape2)
+library(ggplot2)
+library(ggpubr)
+
+
+ggplot(nonTransfored, aes(x = Genotype, y = NormDiameter.W4,fill= Genotype))+
+  geom_boxplot(alpha = 0.1, outlier.colour = NA, position = position_dodge(width=1))+
+  geom_point(aes(color= Genotype), position=position_jitterdodge(dodge.width=1.1))+
+  theme(panel.background = element_rect(fill='white', colour='black'),  axis.text.x = element_text(angle = 90, hjust = 1),legend.position = "bottom")+
+  stat_compare_means(comparisons=my_comparisons)+
+  ggtitle("")
+
+
+
+
+```
+
+
+```{r boxplot diff.Volume.ab2, eval=FALSE, include=FALSE, echo=FALSE, dpi=300, fig.width=10, fig.height=12, dev.args=list(pointsize=16)}
+#Islets which ratio of volume between week4 and week1 is over 2
+
+par(mfrow=c(2,2))
+#par(oma=c(0,0,0,0))
+par(mar=c(2,3,4,0.5))
+
+diff.Volume.over.2 = datawide[datawide$diff.Volume>2,]
+
+variables <- c("diff.Length.Volume", "diff.VascVolume.Volume", "diff.BranchingPoints.Volume", "diff.Volume", "NormStraightness.W4" , "NormDiameter.W4", "NormStraightness.W1" , "NormDiameter.W1", "diff.NormDiameter", "diff.NormStraightness"  )
+for(var in variables){
+  
+  boxplot(unlist(diff.Volume.over.2[var])~diff.Volume.over.2$Genotype, at=c(2,3,4,1), cex.axis=0.9, col=colors2, outpch = NA, 
+          main=var, ylab="ratio")
+  
+  stripchart(unlist(diff.Volume.over.2[var])~diff.Volume.over.2$Genotype, at=c(2,3,4,1), vertical = TRUE, method = "overplot",
+             pch = 21, col = "maroon", bg = "bisque",add = TRUE) 
+  
+}
+
+```
+
+```{r boxplot diff.Volume.be2, eval=FALSE, include=FALSE, echo=FALSE, dpi=300, fig.width=10, fig.height=12, dev.args=list(pointsize=16)}
+#Islets which ratio of volume between week4 and week1 is below 2
+par(mfrow=c(2,2))
+#par(oma=c(0,0,0,0))
+par(mar=c(2,3,4,0.5))
+
+toPlot= datawide[datawide$diff.Volume <2,]
+
+variables <- c("diff.Length.Volume", "diff.VascVolume.Volume", "diff.BranchingPoints.Volume", "diff.Volume", "NormStraightness.W4" , "NormDiameter.W4", "NormStraightness.W1" , "NormDiameter.W1", "diff.NormDiameter", "diff.NormStraightness"  )
+for(var in variables){
+  
+  boxplot(unlist(toPlot[var])~toPlot$Genotype, at=c(2,3,4,1), cex.axis=0.9, col=colors2, outpch = NA, 
+          main=var, ylab="ratio")
+  
+  stripchart(unlist(toPlot[var])~toPlot$Genotype, at=c(2,3,4,1), vertical = TRUE, method = "overplot",
+             pch = 21, col = "maroon", bg = "bisque",add = TRUE) 
+  
+}
+
+```
+
+```{r boxplot Volume1.ab2,eval=FALSE, include=FALSE, echo=FALSE, dpi=300, fig.width=10, fig.height=12, dev.args=list(pointsize=16)}
+#Islets which primary volume is above 2*10^6
+par(mfrow=c(2,2))
+#par(oma=c(0,0,0,0))
+par(mar=c(2,3,4,0.5))
+
+toPlot= datawide[datawide$VOLUME.W1 > 2*10^6,]
+
+variables <- c("diff.Length.Volume", "diff.VascVolume.Volume", "diff.BranchingPoints.Volume", "diff.Volume", "NormStraightness.W4" , "NormDiameter.W4", "NormStraightness.W1" , "NormDiameter.W1", "diff.Diameter", "diff.Straightness"  )
+for(var in variables){
+  
+  boxplot(unlist(toPlot[var])~toPlot$Genotype, at=c(2,3,4,1), cex.axis=0.9, col=colors2, outpch = NA, 
+          main=var, ylab="ratio")
+  
+  stripchart(unlist(toPlot[var])~toPlot$Genotype, at=c(2,3,4,1), vertical = TRUE, method = "overplot",
+             pch = 21, col = "maroon", bg = "bisque",add = TRUE) 
+  
+}
+
+```
+
+```{r boxplot Volume1.be2, eval=FALSE, include=FALSE,echo=FALSE, dpi=300, fig.width=10, fig.height=12, dev.args=list(pointsize=16)}
+#Islets which primary volume is below 2*10^6
+par(mfrow=c(2,2))
+#par(oma=c(0,0,0,0))
+par(mar=c(2,3,4,0.5))
+
+toPlot= datawide[datawide$VOLUME.W1 < 2*10^6,]
+
+variables <- c("diff.Length.Volume", "diff.VascVolume.Volume", "diff.BranchingPoints.Volume", "diff.Volume", "NormStraightness.W4" , "NormDiameter.W4", "NormStraightness.W1" , "NormDiameter.W1", "diff.Diameter", "diff.Straightness"  )
+for(var in variables){
+  
+  boxplot(unlist(toPlot[var])~toPlot$Genotype, at=c(2,3,4,1), cex.axis=0.9, col=colors2, outpch = NA, 
+          main=var, ylab="ratio")
+  
+  stripchart(unlist(toPlot[var])~toPlot$Genotype, at=c(2,3,4,1), vertical = TRUE, method = "overplot",
+             pch = 21, col = "maroon", bg = "bisque",add = TRUE) 
+  
+}
+
+```
+
+```{r plot_timelapse, eval=FALSE, include=FALSE,echo=FALSE, message = FALSE, results = FALSE, eval = TRUE, dpi=300, fig.width=10, fig.height=10, dev.args=list(pointsize=16)}
+##############################################
+#plots of data points (W1-W4)
+##############################################
+
+
+variables <- c("Dendrite_Length", "Dendrite_Straightness", "Dendrite_Mean_Diameter", "Filament_Dendrite_Volume_sum", "VOLUME", "NormStraightness", "NormDiameter")
+
+for(var in variables){
+  
+  total <-length(datawide$Genotype)
+  gen <- c("wt", "RipVEGFB", "RT2", "RT2.RipVEGFB")
+  #linear timelapse plot
+  par(mfrow=c(2,2), oma = c(3,3,3,3))
+  #oma = c(3,3,3,3)
+  maxvalue <- ceiling(max(mydata[var],na.rm = TRUE))
+  
+  
+  for(g in gen){
+    n=length(datawide$Genotype[datawide$Genotype==g])
+    colors<-palette(rainbow(n))
+    c=1
+    par(new=F)
+    for (a in (1:total)){
+      if (datawide$Genotype[a]==g){
+        vector<-c(unlist(datawide[paste(var, "W1", sep = ".")])[a],
+                  unlist(datawide[paste(var, "W2", sep = ".")])[a], 
+                  unlist(datawide[paste(var, "W3", sep = ".")])[a],
+                  unlist(datawide[paste(var, "W4", sep = ".")])[a])
+        if(0==0){  #(sum(is.na(vector))==0)
+          print(datawide$Genotype[a])
+          plot(vector, col=colors[c], type="l", ylim=c(0,maxvalue), axes=F, xlab="", ylab="", main=g)
+          
+          par(new=T)
+          c=c+1
+        }
+      }
+    }
+    axis(1, at=c(1, 2, 3, 4), labels=c("W1", "W2", "W3", "W4"), cex.axis=0.8)
+    axis(2, las=2, cex.axis=0.8)
+  }
+  mtext(var, outer = TRUE, cex = 1.5)
+}
+
+
+
+```
+
+
+```{r save_data, echo=FALSE, eval = FALSE}
+
+writeWorksheetToFile("output20171807.xlsx", datawide, "datawide")
+writeWorksheetToFile("output20171807.xlsx", mydata, "datalong")
+```
+
+```{r mouse.means, echo=FALSE, eval = FALSE, fig.width=10, fig.height=10}
+
+my_bind <- function(tt){
+  rbind(c(tt[9], tt$estimate, tt[3]))
+}
+
+library(plyr)
+
+#SUMMARY DATA- averages of groups
+mouse.means <- ddply(datawide,c("Genotype", "Mouse"), summarise, 
+                     diff.Volume=mean(diff.Volume),
+                     diff.BranchingPoints.Volume=mean(diff.BranchingPoints.Volume), 
+                     diff.Length.Volume= mean(diff.Length.Volume),
+                     diff.VascVolume.Volume = mean(diff.VascVolume.Volume)
+) 
+
+
+
+#install.packages("gridExtra")
+library(gridExtra)
+library(grid)
+tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
+grid.table(mouse.means, theme=tt)
+grid.newpage()
+
+
+# tt1<-t.test(sprouting.front.um~genotype ,data= group.means, var.equal = FALSE)
+# tt2<-t.test(filopodia~genotype ,data= group.means, var.equal = FALSE)
+# tt3<-t.test(filopodia.1um~genotype ,data= group.means, var.equal = FALSE)
+# 
+# 
+# r1 <- my_bind(tt1)
+# r2 <- my_bind(tt2)
+# r3 <- my_bind(tt3)
+# 
+# 
+# kable(rbind(r1,r2,r3),digits=3, allign = "l", caption = "Ttest values")
+# 
+# 
+# write.table(group.means, file = "group.means.csv",
+#             sep = ";", dec = ".",
+#             row.names = FALSE,
+#             col.names = TRUE)
+
+```
+
+```{r mouse.groups.plot, echo=FALSE, eval = FALSE, fig.width=10, fig.height=12}
+
+par(mfrow=c(2,2))
+par(mar=c(2,3,4,0.5))
+variables <- c("diff.Length.Volume", "diff.VascVolume.Volume", "diff.BranchingPoints.Volume"  )
+
+
+for(var in variables){
+  
+  boxplot(unlist(mouse.means[var])~ mouse.means$Genotype , at=c(2,3,4,1), cex.axis=0.9, col=colors2, outpch = NA, 
+          main=paste(var, "\n Difference between week 1 and 4"), ylab="ratio")
+  
+  stripchart(unlist(mouse.means[var])~ mouse.means$Genotype, vertical = TRUE, at=c(2,3,4,1), method = "overplot",
+             pch = 21, col = "maroon", bg = "bisque",add = TRUE) 
+  
+}
+
+```
+
+```{r genotype.means.plot, echo=FALSE, eval = FALSE, fig.width=15, fig.height=10}
+
+library(gridExtra)
+library(grid)
+
+genotype.means <- ddply(datawide,c("Genotype"), summarise,
+                        diff.Volume=mean(diff.Volume),
+                        diff.BranchingPoints.Volume=mean(diff.BranchingPoints.Volume), 
+                        diff.Length.Volume= mean(diff.Length.Volume),
+                        diff.VascVolume.Volume = mean(diff.VascVolume.Volume),
+                        diff.NormStraightness = mean(diff.NormStraightness),
+                        diff.NormDiameter = mean(diff.NormDiameter)
+                        
+)
+# 
+# genotype.means.no.outliers <- ddply(datawide2,c("Genotype"), summarise,
+#                    diff.Volume=mean(diff.Volume, na.rm=TRUE),
+#                    diff.BranchingPoints.Volume=mean(diff.BranchingPoints.Volume, na.rm=TRUE), 
+#                    diff.Length.Volume= mean(diff.Length.Volume, na.rm=TRUE),
+#                    diff.VascVolume.Volume = mean(diff.VascVolume.Volume, na.rm=TRUE)
+#                    
+#                    )
+
+g1 <- tableGrob(genotype.means, theme=tt)
+# g2 <- tableGrob(genotype.means.no.outliers, theme=tt)
+#valigned <- combine(g1, g2, along=2)
+
+grid.arrange(g1)
+#print("table 1 - means, table 2 - means without outliers >8")
+
+
+```
+
+```{r dendrit_list_graphs, eval = FALSE, include = FALSE, echo=FALSE, dpi=300, fig.width=10, fig.height=12, dev.args=list(pointsize=16)}
+# Visualisation of dendrite fragments straightness to length relation (all timepoints pulled)
+par(mfrow=c(2,2))
+lim <- c(-5, 300)
+plot(Dendrite_Straightness~Dendrite_Length, 
+     data = dendrite.list[dendrite.list$Genotype =="wt",],
+     col=rgb(0,100,0,70,maxColorValue=255), main="wt", xlim = lim)
+
+plot(Dendrite_Straightness~Dendrite_Length, 
+     data = dendrite.list[dendrite.list$Genotype =="RipVEGFB",],
+     col=rgb(0,100,0,70,maxColorValue=255), main = "RipVEGFB", xlim = lim)
+
+plot(Dendrite_Straightness~Dendrite_Length, 
+     data = dendrite.list[dendrite.list$Genotype =="RT2",],
+     col=rgb(0,100,0,70,maxColorValue=255), main = "RT2", xlim =lim)
+
+plot(Dendrite_Straightness~Dendrite_Length, 
+     data = dendrite.list[dendrite.list$Genotype =="RT2.RipVEGFB",],
+     col=rgb(0,100,0,70,maxColorValue=255), main = "RT2.RipVEGFB", xlim = lim)
+
+
+#group in n categories
+dendrite.list$group <- as.factor(cut(dendrite.list$Dendrite_Length, 15))
+
+plot(Dendrite_Straightness~group, 
+     data = dendrite.list[dendrite.list$Genotype =="wt",],
+     col=rgb(0,100,0,70,maxColorValue=255), main="wt", las =2, xlab = "")
+
+plot(Dendrite_Straightness~group, 
+     data = dendrite.list[dendrite.list$Genotype =="RipVEGFB",],
+     col=rgb(0,100,0,70,maxColorValue=255), main = "RipVEGFB", las =2, xlab = "")
+
+plot(Dendrite_Straightness~group, 
+     data = dendrite.list[dendrite.list$Genotype =="RT2",],
+     col=rgb(0,100,0,70,maxColorValue=255), main = "RT2", las =2, xlab = "")
+
+plot(Dendrite_Straightness~group, 
+     data = dendrite.list[dendrite.list$Genotype =="RT2.RipVEGFB",],
+     col=rgb(0,100,0,70,maxColorValue=255), main = "RT2.RipVEGFB", las =2, xlab = "")
+
+
+
+
+```
+
+
