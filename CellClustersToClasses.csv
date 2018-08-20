@@ -1,0 +1,18 @@
+cluster,level1class
+PC ,Pericytes
+FB1, VLMC
+FB2, VLMC
+vSMC, vSMC
+VSMC2, vSMC
+VSMC3, vSMC
+aaSMC, vSMC
+aSMC, vSMC
+AC , Astrocytes
+MG , Microglia
+OL , Oligodendrocytes
+EC1 , Endothelial
+EC2, Endothelial
+ EC3, Endothelial
+ vEC, Endothelial
+ capilEC, Endothelial
+ aEC, Endothelial

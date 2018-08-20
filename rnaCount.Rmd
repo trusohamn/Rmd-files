@@ -59,6 +59,48 @@ myFullData$level1class <- revalue(myFullData$level1class,
                                     "Oligodendrocyte Precursor"="OPC"))
 ```
 
+```{r dataLoadB, echo=FALSE, include=FALSE, eval = TRUE}
+wdB <- paste0(wd,"/Betsholtz")
+setwd(wdB)
+
+###join cells from two datasets, remove gens which are not covered in both
+dfB1 <- read.table("GSE98816_Brain_samples_normalized_counts_matrix.txt", header=TRUE, row.names=1, strip.white=TRUE)
+dfB2 <- read.table("GSE99058_Brain_AC_250samples_normalized_counts_matrix.txt", header=TRUE, row.names=1, strip.white=TRUE)
+dfB <- merge(dfB1, dfB2, by="row.names", all = F)
+row.names(dfB) <-dfB$Row.names
+dfB$Row.names <-NULL
+
+###read file with cell clusters for dfB1
+cellClusters <- read.csv("Betsholtz cell cluster identity brain_3186cell_15clusters.csv")
+colnames(cellClusters)[colnames(cellClusters) == 'cell'] <- 'cell_id'
+###create df with clusters for dfB2 by regex
+cellClusters2 <- data.frame(cell_id = colnames(dfB2), 
+                            cluster = regmatches(colnames(dfB2), regexpr("V.*(?=_)", colnames(dfB2), perl=TRUE)))
+###add 250 cells with clusters
+cellClusters <- rbind(cellClusters, cellClusters2)
+###get rid of whitespaces and bring everyting to uppercase
+cellClusters$cluster <- toupper(trimws(cellClusters$cluster, which="both")) 
+
+###add column with level1class to the clusters
+clustersToClasses <- read.csv("C:/Users/Marta/rnaSeq/CellClustersToClasses.csv")
+clustersToClasses$cluster <- toupper(trimws(clustersToClasses$cluster, which="both"))
+clustersToClasses$level1class <- trimws(clustersToClasses$level1class, which="both")
+cellClusters <- merge(x =cellClusters, y = clustersToClasses, by.y = "cluster" , by.x="cluster" , all = TRUE)
+
+myFullData2 <- merge(x =cellClusters, y = t(dfB), by.y = "row.names" , by.x="cell_id" , all = TRUE)
+###factor and change order of cell types
+myFullData2$level1class <- factor(myFullData2$level1class, 
+                                 c("VLMC",
+                                   "vSMC",
+                                   "Endothelial",
+                                   "Pericytes",
+                                   "Microglia",
+                                   "Astrocytes",
+                                   "Oligodendrocytes"))
+
+
+```
+
 ```{r dataLoad2, echo=FALSE, include=FALSE, eval = TRUE} 
 setwd(wd)
 
@@ -162,19 +204,17 @@ library(ggplot2)
 #################
 #Spec plot
 #################
-aes_string2 <- function(...){
-  ###solves problem with parse when the name starts with number
-  args <- lapply(list(...), function(x) sprintf("`%s`", x))
-  do.call(aes_string, args)
-}
+    
+  color10 <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184")
+  color15 <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184", "#808184", "#808184", "#808184", "#808184", "#808184")
 
-plot1 <- function(gen){
-  color <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184")
+plot1 <- function(gen, dataset = myFullData, color=color10){
+
   avals <- c(rep.int(0.4,10))
   avalsHex <- paste0(color, toupper(as.hexmode(round(avals*255))))
   
   ###create a temp dataframe with only gen column
-  temp <- myFullData[c(gen, "level1class")]
+  temp <- dataset[c(gen, "level1class")]
   names(temp)[1] <-"gen"
   
   ggplot(temp, aes(x=level1class , y=gen)) +
@@ -353,9 +393,11 @@ empty <- ggplot() + geom_point(aes(1, 1), colour = "white") +
 ```
 
 ```{r printForSingleGene, echo=FALSE}
-gen="2610307P16Rik"
-homolog <- as.character(renames[match(gen,renames$mouse), "human"])
-print(plot1(gen))
+gen="Prim2"
+#homolog <- as.character(renames[match(gen,renames$mouse), "human"])
+print(plot1(gen, myFullData2, color10))
+print(plot1(gen, myFullData2, color15))
+
 print(plot2(gen))
 print(plot3(gen))
 print(plot3_withName(toupper(gen)))
@@ -447,20 +489,16 @@ data_summary <- function(data, varname, groupnames){
     c(mean = mean(x[[col]], na.rm=TRUE),
       sd = sd(x[[col]], na.rm=TRUE))
   }
-  data_sum<-ddply(data, groupnames, .fun=summary_func,
-                  varname)
+  data_sum <- ddply(data, groupnames, .fun=summary_func, varname)
   return(data_sum)
 }
 
-summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
-                      conf.interval=.95, .drop=TRUE) {
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
   library(plyr)
-  
-  
   # New version of length which can handle NA's: if na.rm==T, don't count them
   length2 <- function (x, na.rm=FALSE) {
     if (na.rm) sum(!is.na(x))
-    else       length(x)
+    else length(x)
   }
   
   # This does the summary. For each group's data frame, return a vector with
@@ -472,8 +510,7 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
                      sd   = sd     (xx[[col]], na.rm=na.rm)
                    )
                  },
-                 measurevar
-  )
+                 measurevar)
   
   # Rename the "mean" column    
   datac <- rename(datac, c("mean" = measurevar))
@@ -490,29 +527,44 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
 }
 
 theme1 <- theme(panel.background = element_rect(fill='white', colour='white'),
-                legend.position="none",legend.title=element_blank(),
-                axis.line.y = element_blank(), axis.title.y=element_blank(), axis.text.y = element_text(colour="grey45"), axis.ticks.y = element_line(colour="grey45"),
-                axis.text.x=element_text(colour="grey45",angle = 90, hjust = 1, size=8),axis.ticks.x = element_blank(), axis.line.x = element_blank(), axis.title.x=element_blank())
+                legend.position="none",
+                legend.title=element_blank(),
+                axis.line.y = element_blank(), 
+                axis.title.y=element_blank(), 
+                axis.text.y = element_text(colour="grey45"), 
+                axis.ticks.y = element_line(colour="grey45"),
+                axis.text.x=element_text(colour="grey45",angle = 90, hjust = 1, size=8),
+                axis.ticks.x = element_blank(), 
+                axis.line.x = element_blank(), 
+                axis.title.x=element_blank())
 
 theme2 <- theme(panel.background = element_rect(fill='white', colour='white'),
-                legend.position="none",legend.title=element_blank(),
-                axis.line.y = element_blank(), axis.title.y=element_blank(), 
-                axis.text.y =  element_blank(), axis.ticks.y =  element_blank(),
+                legend.position="none",
+                legend.title=element_blank(),
+                axis.line.y = element_blank(), 
+                axis.title.y=element_blank(), 
+                axis.text.y =  element_blank(), 
+                axis.ticks.y =  element_blank(),
                 axis.text.x=element_text(colour="grey45",angle = 90, hjust = 1, size=8),
-                axis.ticks.x = element_blank(), axis.line.x = element_blank(), axis.title.x=element_blank(),
+                axis.ticks.x = element_blank(), 
+                axis.line.x = element_blank(), 
+                axis.title.x=element_blank(),
                 strip.text.y = element_text(size = 5))
 
-fig1plot  <- function(genes){
+colorb15 <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184", "#808184", "#808184", "#808184", "#808184", "#808184")
+
+
+fig1plot  <- function(genes, dataset = myFullData, color=colorb15){
   library(reshape)
-  color <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184")
+  
   avals <- c(rep.int(0.4,10))
   avalsHex <- paste0(color, toupper(as.hexmode(round(avals*255))))
   
-  name <- genes[1]
+  name <- genes[1] #first value is a name of a group
   genes <- genes[(-1)]
   
   colnames <- c("level1class" ,  genes)
-  sampleData <- melt(myFullData[, colnames])
+  sampleData <- melt(dataset[, colnames])
   
   dsf <- data_summary(sampleData, varname="value", groupnames= c("variable", "level1class" )) #SD
   dsfse <- summarySE(sampleData, measurevar="value", groupvars= c("variable", "level1class" )) #SE
@@ -547,21 +599,39 @@ fig1plot  <- function(genes){
 #                "Klf4", "H2???Q2", "Abcc9", "Calcrl", "Utrn", "Vamp5"))
 
 
-sets <- list(c("EC Down (mouse)",
-               "Itm2a", "Emcn", "Ccm2l", "Apcdd1", "Slc35f2", "Slco1c1", "Tmem204", "Eif2ak2", "Pggt1b", "Slc25a53", "Erap1", "Calcrl", "Foxc1", "Ebf1", "Cav2", "Cnot6l", "Mitd1", "Itgb1", "Atp13a5"),
-             
-             c("Pericytes Down (mouse)",
-               "Atp13a5", "Ccm2l", "Gulp1", "Erap1", "Wisp1", "Ebf1", "Foxd1", "Hey2", "Plxdc2", "Acer3", "Cav2", "Slc35f2", "Calcrl", "Itgb1" ))
+# sets <- list(c("EC Down (mouse)",
+#                "Itm2a", "Emcn", "Ccm2l", "Apcdd1", "Slc35f2", "Slco1c1", "Tmem204", "Eif2ak2", "Pggt1b", 
+#                "Slc25a53", "Erap1", "Calcrl", "Foxc1", "Ebf1", "Cav2", "Cnot6l", "Mitd1", "Itgb1", "Atp13a5"),
+#              
+#              c("Pericytes Down (mouse)",
+#                "Atp13a5", "Ccm2l", "Gulp1", "Erap1", "Wisp1", "Ebf1", "Foxd1", "Hey2", "Plxdc2", "Acer3", 
+#                "Cav2", "Slc35f2", "Calcrl", "Itgb1" ))
 
-
+sets <- list(c("EC Up(mouse) d28-70", "Ccdc141", "Hspg2", "Col4a2"))
+setwd(wd)
 library(gridExtra)
-#pdf(file="fig1.pdf",  width=4, height=28) 
-s1=fig1plot(sets[[1]])
-s2=fig1plot(sets[[2]])
-#s3=fig1plot(sets[[3]])
-#grid.arrange(s1, s2, s3, ncol=1)
-grid.arrange(s1, s2, ncol=1)
-#dev.off()
+pdf(file="fig1.pdf",  width=4, height=4) 
+s1=fig1plot(sets[[1]], myFullData2)
+grid.arrange(s1, ncol=1)
+dev.off()
+
+# #pdf(file="fig1.pdf",  width=4, height=28) 
+# s1=fig1plot(sets[[1]], myFullData2)
+# s2=fig1plot(sets[[2]], myFullData2)
+# 
+# grid.arrange(s1, s2, ncol=1)
+# #dev.off()
+
+# 
+# setwd(wd)
+# library(gridExtra)
+# pdf(file="fig1.pdf",  width=4, height=28) 
+# s1=fig1plot(sets[[1]])
+# s2=fig1plot(sets[[2]])
+# #s3=fig1plot(sets[[3]])
+# #grid.arrange(s1, s2, s3, ncol=1)
+# grid.arrange(s1, s2, ncol=1)
+# dev.off()
 
 ```
 
@@ -618,36 +688,13 @@ fig2plot <- function(aSet){
           legend.text = element_text(colour="grey45"))
 }
 
+setwd(wd)
 library(gridExtra)
-#pdf(file="fig2.pdf",  width=4, height=8) 
+pdf(file="fig2.pdf",  width=4, height=8) 
 s1=fig2plot(sets[[1]])
 s2=fig2plot(sets[[2]])
 s3=fig2plot(sets[[3]])
 grid.arrange(s1, s2, s3, ncol=1)
-#dev.off()
-
-```
-
-
-
-```{r testingOutline, eval=FALSE, include=FALSE}
-library(ggplot2)
-library(gridExtra)
-
-gens <- c("Col1a1", "Col1a2","Col15a1",  "Bgn", 'Col3a1', "Igf2","Col6a3")
-lay <- rbind(c(1,1,4,2,4,3),
-             c(1,1,4,5,4,5))
-wd = "C:/Users/mlecz_000/Desktop/sebastian/expression/testOverlay"
-setwd(wd)
-
-for(gen in gens){
-  p1 <- plot1(gen)
-  p2 <- plot2(gen)
-  p3 <- plot3(gen)
-  png(file=paste0(gen, ".png"), res=325, width=2500, height = 1750) 
-  grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,2,12,2,6), heights= c(8,1))
-  dev.off()
-}
-
+dev.off()
 
 ```
