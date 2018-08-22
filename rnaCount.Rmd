@@ -1,6 +1,6 @@
 ---
 title: "rnaCountSeb"
-author: "Marta"
+author: "Marta Trusohamn"
 output: word_document
 
 ---
@@ -59,7 +59,7 @@ myFullData$level1class <- revalue(myFullData$level1class,
                                     "Oligodendrocyte Precursor"="OPC"))
 ```
 
-```{r dataLoadB, echo=FALSE, include=FALSE, eval = TRUE}
+```{r dataLoad1CB, echo=FALSE, include=FALSE, eval = TRUE}
 wdB <- paste0(wd,"/Betsholtz")
 setwd(wdB)
 
@@ -206,8 +206,6 @@ library(ggplot2)
 #################
     
   color10 <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184")
-  color15 <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184", "#808184", "#808184", "#808184", "#808184", "#808184")
-
 plot1 <- function(gen, dataset = myFullData, color=color10){
 
   avals <- c(rep.int(0.4,10))
@@ -393,10 +391,9 @@ empty <- ggplot() + geom_point(aes(1, 1), colour = "white") +
 ```
 
 ```{r printForSingleGene, echo=FALSE}
-gen="Prim2"
+gen="Rgs9bp"
 #homolog <- as.character(renames[match(gen,renames$mouse), "human"])
 print(plot1(gen, myFullData2, color10))
-print(plot1(gen, myFullData2, color15))
 
 print(plot2(gen))
 print(plot3(gen))
@@ -421,21 +418,9 @@ renames<- read.csv("mouse_human_one_to_one.csv")
 ```
 
 ```{r drawPlotsForWebsite}
-#wd = "C:/Users/mlecz_000/Desktop/sebastian/expression/website"
-setwd(wd)
 
-#genes <- c("Prn")
-
-genes <- c("Sept11")
-
-#genes <- colnames(myFullData)[-(1:20980)] 
-lay <- rbind(c(1,1,4,2,4,3),
-             c(1,1,4,5,4,5))
-library(gridExtra)
-
-for (gen in genes) {
-  print(gen)
-  #if (!(substr(gen, 0, 1) %in% c(0,1,2,3,4,5,6,7,8,9))){
+generateGraphFile <- function(gen){
+  #print(gen)
     filename = gen
     #spec
     if (gen %in% colnames(myFullData)) p1 <- plot1(gen) else p1 <- empty
@@ -459,16 +444,23 @@ for (gen in genes) {
       
     }else p3 <- empty
     
-    
     filename = tolower(filename)
     png(file=paste0(filename, ".png"), res=325, width=2500, height = 1750) 
     grid.arrange(p1, p2, p3, layout_matrix = lay, widths= c(4,4,2,12,2,6), heights= c(8,1))
     dev.off()
-  
 }
 
+setwd(wd)
 
+lay <- rbind(c(1,1,4,2,4,3),
+             c(1,1,4,5,4,5))
+library(gridExtra)
 
+#genes <- c("Prn")
+genes <- colnames(myFullData)[(100:120)] 
+#genes <- colnames(myFullData)[-(1:20980)] 
+
+lapply(genes, generateGraphFile)
 
 ```
 
@@ -551,10 +543,10 @@ theme2 <- theme(panel.background = element_rect(fill='white', colour='white'),
                 axis.title.x=element_blank(),
                 strip.text.y = element_text(size = 5))
 
-colorb15 <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184", "#808184", "#808184", "#808184", "#808184", "#808184")
+colorb10 <- c("#EC1C24","#FAAF40","#FFD700", "#A0522D", "#2E8B57","#6DC7BE", "#7F3F97","#524FA0", "#BBBDBF", "#808184")
 
 
-fig1plot  <- function(genes, dataset = myFullData, color=colorb15){
+fig1plot  <- function(genes, dataset = myFullData, color=colorb10){
   library(reshape)
   
   avals <- c(rep.int(0.4,10))
@@ -586,33 +578,20 @@ fig1plot  <- function(genes, dataset = myFullData, color=colorb15){
 }
 
 
-# sets <- list(c("Early", "Col1a1", "Col1a2","Col15a1",  "Bgn", 'Col3a1', "Igf2","Col6a3"),
-#              c("Sustained", "Lum","Col5a2","Apod", "Lama2","Pcolce", "Nid1" ),
-#           c("Late",  "Nupr1","Ccl11","Igfbp2",  "Serping1", "Spp1", "Dcn", "Itih5"  )
-#           ) 
 
-# sets <- list(c("Mouse", "Ccdc141", "Myct1", "Hspg2", "Capg", "Smoc2", "Icam1", "Cd34", "Cxcr4", "Tnfrsf18", "Tnfrsf10b", "Il2rg"
-#                ,"Pecam1", "Klhl6", "Pgm5", "Krt84", "4930509E16Rik", "Eogt", "Hmgcs2", "Hspg2", "Col4a2", "Pvr", "Hhex",
-#                "Sparc", "Itpkb", "Itga2b", "Timeless", "Yes1", "4930523C07Rik", "Cd276", "Gpr160"),
-#              c("Human", "Aplnr", "Aldh1a7", "Samsn1", "Itga6", "Slc16a9", "Pltp", "H2???T23",
-#                "Adamts9", "Osmr", "Srgn", "Apold1", "Prdm1", "H2???Q5", "Kcnj8", "Dlc1",
-#                "Klf4", "H2???Q2", "Abcc9", "Calcrl", "Utrn", "Vamp5"))
+sets <- 
+#list(c("VSMC UP 2018.08.21","Ascl2","Alx1","Mylk", "Flna", "Palld", "Fosl2", "Prss23", "Crlf1"))
+#list(c("VSMC DOWN 2018.08.21","Des","Amigo2","Nexn","Tmem38b","Sh3bgr", "Zfp385c","Nrarp"))
+#list(c("EC DOWN","Pvr","Pecam1","Rbl1","8430408G22Rik","Rgs9bp","Tmem204","Ccm2l","Tdrp","Efna3","Sgpp2"))
+#list(c("EC UP", "Ccdc141","Pgm5","Icam1","Hhex","Timeless","Capg","Cd34","Tnfrsf10b","Il2rg","Klhl6"))
+list(c("PC Down", "Saa1","Ebf1","Abcc9","Heyl","Aif1l","Nrarp"))
+#list(c("PC UP", "Sik1","S1pr3","Atp13a5","Fam161a","Rarres2","Gpx8","Lamc1","Arhgdib","Ggta1","Plxdc2" ))
 
-
-# sets <- list(c("EC Down (mouse)",
-#                "Itm2a", "Emcn", "Ccm2l", "Apcdd1", "Slc35f2", "Slco1c1", "Tmem204", "Eif2ak2", "Pggt1b", 
-#                "Slc25a53", "Erap1", "Calcrl", "Foxc1", "Ebf1", "Cav2", "Cnot6l", "Mitd1", "Itgb1", "Atp13a5"),
-#              
-#              c("Pericytes Down (mouse)",
-#                "Atp13a5", "Ccm2l", "Gulp1", "Erap1", "Wisp1", "Ebf1", "Foxd1", "Hey2", "Plxdc2", "Acer3", 
-#                "Cav2", "Slc35f2", "Calcrl", "Itgb1" ))
-
-sets <- list(c("EC Up(mouse) d28-70", "Ccdc141", "Hspg2", "Col4a2"))
 setwd(wd)
 library(gridExtra)
-pdf(file="fig1.pdf",  width=4, height=4) 
-s1=fig1plot(sets[[1]], myFullData2)
-grid.arrange(s1, ncol=1)
+pdf(file="fig1edataLin.pdf",  width=6, height=16) 
+s1=fig1plot(sets[[1]], myFullData)
+grid.arrange(s1, empty, empty, ncol=1)
 dev.off()
 
 # #pdf(file="fig1.pdf",  width=4, height=28) 
