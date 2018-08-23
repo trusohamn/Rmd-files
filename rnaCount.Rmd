@@ -97,7 +97,8 @@ myFullData2$level1class <- factor(myFullData2$level1class,
                                    "Microglia",
                                    "Astrocytes",
                                    "Oligodendrocytes"))
-
+###remove na (astrocytes from sheet1)
+myFullData2 <- myFullData2[!is.na(myFullData2$level1class),]
 
 ```
 
@@ -584,13 +585,13 @@ sets <-
 #list(c("VSMC DOWN 2018.08.21","Des","Amigo2","Nexn","Tmem38b","Sh3bgr", "Zfp385c","Nrarp"))
 #list(c("EC DOWN","Pvr","Pecam1","Rbl1","8430408G22Rik","Rgs9bp","Tmem204","Ccm2l","Tdrp","Efna3","Sgpp2"))
 #list(c("EC UP", "Ccdc141","Pgm5","Icam1","Hhex","Timeless","Capg","Cd34","Tnfrsf10b","Il2rg","Klhl6"))
-list(c("PC Down", "Saa1","Ebf1","Abcc9","Heyl","Aif1l","Nrarp"))
-#list(c("PC UP", "Sik1","S1pr3","Atp13a5","Fam161a","Rarres2","Gpx8","Lamc1","Arhgdib","Ggta1","Plxdc2" ))
+#list(c("PC Down", "Saa1","Ebf1","Abcc9","Heyl","Aif1l","Nrarp"))
+list(c("PC UP", "Sik1","S1pr3","Atp13a5","Fam161a","Rarres2","Gpx8","Lamc1","Arhgdib","Ggta1","Plxdc2" ))
 
 setwd(wd)
 library(gridExtra)
-pdf(file="fig1edataLin.pdf",  width=6, height=16) 
-s1=fig1plot(sets[[1]], myFullData)
+pdf(file="fig1f.pdf",  width=6, height=16) 
+s1=fig1plot(sets[[1]], myFullData2)
 grid.arrange(s1, empty, empty, ncol=1)
 dev.off()
 

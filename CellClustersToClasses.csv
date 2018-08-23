@@ -3,11 +3,11 @@ PC ,Pericytes
 FB1, VLMC
 FB2, VLMC
 vSMC, vSMC
-VSMC2, vSMC
-VSMC3, vSMC
+VSMC2, Astrocytes
+VSMC3, Astrocytes
 aaSMC, vSMC
 aSMC, vSMC
-AC , Astrocytes
+AC ,None
 MG , Microglia
 OL , Oligodendrocytes
 EC1 , Endothelial
